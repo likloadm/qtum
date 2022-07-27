@@ -328,8 +328,7 @@ BITCOIN_CORE_H = \
   qtum/qtumutils.h \
   qtum/qtumdelegation.h \
   qtum/qtumtoken.h \
-  qtum/qtumledger.h \
-  crypto/yespower/yespower.h
+  qtum/qtumledger.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
@@ -513,14 +512,7 @@ crypto_libbitcoin_crypto_base_a_SOURCES = \
   eth_client/utils/libscrypt/sha256.h \
   eth_client/utils/libscrypt/slowequals.c \
   eth_client/utils/libscrypt/slowequals.h \
-  eth_client/utils/libscrypt/sysendian.h \
-  crypto/yespower/sha256y.c \
-  crypto/yespower/sha256y.h \
-  crypto/yespower/yespower-ref.c \
-  crypto/yespower/yespower.c \
-  crypto/yespower/yespower.h \
-  crypto/yespower/insecure_memzero.h \
-  crypto/yespower/sysendian.h
+  eth_client/utils/libscrypt/sysendian.h
 
 if USE_ASM
 crypto_libbitcoin_crypto_base_a_SOURCES += crypto/sha256_sse4.cpp
