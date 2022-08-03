@@ -1807,9 +1807,10 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
             }
 
             /////////////////////////////////////////////////////////// qtum
+            LOCK(cs_main);
+            CChain& active_chain = chainman.ActiveChain();
+            if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock)
             {
-                LOCK(cs_main);
-                CChain& active_chain = chainman.ActiveChain();
                 if(active_chain.Tip() != nullptr){
                     globalState->setRoot(uintToh256(active_chain.Tip()->hashStateRoot));
                     globalState->setRootUTXO(uintToh256(active_chain.Tip()->hashUTXORoot));
