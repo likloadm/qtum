@@ -269,25 +269,25 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     }
 
-    //////////////////////////////////////////////////////// qtum
-    QtumDGP qtumDGP(globalState.get(), m_chainstate, fGettingValuesDGP);
-    globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(nHeight));
-    uint32_t blockSizeDGP = qtumDGP.getBlockSize(nHeight);
-    minGasPrice = qtumDGP.getMinGasPrice(nHeight);
-    if(gArgs.IsArgSet("-staker-min-tx-gas-price")) {
-        CAmount stakerMinGasPrice;
-        if(ParseMoney(gArgs.GetArg("-staker-min-tx-gas-price", ""), stakerMinGasPrice)) {
-            minGasPrice = std::max(minGasPrice, (uint64_t)stakerMinGasPrice);
-        }
-    }
-    hardBlockGasLimit = qtumDGP.getBlockGasLimit(nHeight);
-    softBlockGasLimit = gArgs.GetArg("-staker-soft-block-gas-limit", hardBlockGasLimit);
-    softBlockGasLimit = std::min(softBlockGasLimit, hardBlockGasLimit);
-    txGasLimit = gArgs.GetArg("-staker-max-tx-gas-limit", softBlockGasLimit);
-
-    nBlockMaxWeight = blockSizeDGP ? blockSizeDGP * WITNESS_SCALE_FACTOR : nBlockMaxWeight;
-
     if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        //////////////////////////////////////////////////////// qtum
+        QtumDGP qtumDGP(globalState.get(), m_chainstate, fGettingValuesDGP);
+        globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(nHeight));
+        uint32_t blockSizeDGP = qtumDGP.getBlockSize(nHeight);
+        minGasPrice = qtumDGP.getMinGasPrice(nHeight);
+        if(gArgs.IsArgSet("-staker-min-tx-gas-price")) {
+            CAmount stakerMinGasPrice;
+            if(ParseMoney(gArgs.GetArg("-staker-min-tx-gas-price", ""), stakerMinGasPrice)) {
+                minGasPrice = std::max(minGasPrice, (uint64_t)stakerMinGasPrice);
+            }
+        }
+        hardBlockGasLimit = qtumDGP.getBlockGasLimit(nHeight);
+        softBlockGasLimit = gArgs.GetArg("-staker-soft-block-gas-limit", hardBlockGasLimit);
+        softBlockGasLimit = std::min(softBlockGasLimit, hardBlockGasLimit);
+        txGasLimit = gArgs.GetArg("-staker-max-tx-gas-limit", softBlockGasLimit);
+
+        nBlockMaxWeight = blockSizeDGP ? blockSizeDGP * WITNESS_SCALE_FACTOR : nBlockMaxWeight;
+
         dev::h256 oldHashStateRoot(globalState->rootHash());
         dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
         ////////////////////////////////////////////////// deploy offline staking contract
