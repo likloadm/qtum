@@ -3295,7 +3295,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     LogPrint(BCLog::BENCH, "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs (%.2fms/blk)]\n", nInputs - 1, MILLI * (nTime4 - nTime2), nInputs <= 1 ? 0 : MILLI * (nTime4 - nTime2) / (nInputs-1), nTimeVerify * MICRO, nTimeVerify * MILLI / nBlocksTotal);
 
 ////////////////////////////////////////////////////////////////// // qtum
-    if(pindex->nHeight == m_params.GetConsensus().nSmartActivationBlock){
+    if(pindex->nHeight > m_params.GetConsensus().nSmartActivationBlock){
         if(pindex->nHeight == m_params.GetConsensus().nOfflineStakeHeight){
             globalState->deployDelegationsContract();
         }
