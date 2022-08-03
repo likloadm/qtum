@@ -97,6 +97,8 @@ public:
     }
 
     const CBlock& GenesisBlock() const { return genesis; }
+    const uint256 HashStateRoot() const { return hashStateRoot; }
+    const uint256 HashUTXORoot() const { return hashUTXORoot; }
     /** Default value for -checkmempool and -checkblockindex argument */
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Policy: Filter transactions that do not match well-defined patterns */
@@ -152,6 +154,8 @@ protected:
     uint16_t nDefaultPort;
     uint64_t nPruneAfterHeight;
     uint64_t m_assumed_blockchain_size;
+    uint256 hashStateRoot;
+    uint256 hashUTXORoot;
     uint64_t m_assumed_chain_state_size;
     std::vector<std::string> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
