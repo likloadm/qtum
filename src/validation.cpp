@@ -3295,78 +3295,80 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     LogPrint(BCLog::BENCH, "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs (%.2fms/blk)]\n", nInputs - 1, MILLI * (nTime4 - nTime2), nInputs <= 1 ? 0 : MILLI * (nTime4 - nTime2) / (nInputs-1), nTimeVerify * MICRO, nTimeVerify * MILLI / nBlocksTotal);
 
 ////////////////////////////////////////////////////////////////// // qtum
-    if(pindex->nHeight == m_params.GetConsensus().nOfflineStakeHeight){
-        globalState->deployDelegationsContract();
-    }
-    checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
-    checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
-    checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
+    if(pindex->nHeight == m_params.GetConsensus().nSmartActivationBlock){
+        if(pindex->nHeight == m_params.GetConsensus().nOfflineStakeHeight){
+            globalState->deployDelegationsContract();
+        }
+        checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
+        checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
+        checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
 
     //If this error happens, it probably means that something with AAL created transactions didn't match up to what is expected
-    if((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
-    {
-        LogPrintf("Actual block data does not match block expected by AAL\n");
-        //Something went wrong with AAL, compare different elements and determine what the problem is
-        if(checkBlock.hashMerkleRoot != block.hashMerkleRoot){
-            //there is a mismatched tx, so go through and determine which txs
-            if(block.vtx.size() > checkBlock.vtx.size()){
-                LogPrintf("Unexpected AAL transactions in block. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
-                for(size_t i=0;i<block.vtx.size();i++){
-                    if(i > checkBlock.vtx.size()-1){
-                        LogPrintf("Unexpected transaction: %s\n", block.vtx[i]->ToString());
-                    }else {
+        if((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
+        {
+            LogPrintf("Actual block data does not match block expected by AAL\n");
+            //Something went wrong with AAL, compare different elements and determine what the problem is
+            if(checkBlock.hashMerkleRoot != block.hashMerkleRoot){
+                //there is a mismatched tx, so go through and determine which txs
+                if(block.vtx.size() > checkBlock.vtx.size()){
+                    LogPrintf("Unexpected AAL transactions in block. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
+                    for(size_t i=0;i<block.vtx.size();i++){
+                        if(i > checkBlock.vtx.size()-1){
+                            LogPrintf("Unexpected transaction: %s\n", block.vtx[i]->ToString());
+                        }else {
+                            if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
+                                LogPrintf("Mismatched transaction at entry %i\n", i);
+                                LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
+                                LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
+                            }
+                        }
+                    }
+                }else if(block.vtx.size() < checkBlock.vtx.size()){
+                    LogPrintf("Actual block is missing AAL transactions. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
+                    for(size_t i=0;i<checkBlock.vtx.size();i++){
+                        if(i > block.vtx.size()-1){
+                            LogPrintf("Missing transaction: %s\n", checkBlock.vtx[i]->ToString());
+                        }else {
+                            if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
+                                LogPrintf("Mismatched transaction at entry %i\n", i);
+                                LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
+                                LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
+                            }
+                        }
+                    }
+                }else{
+                    //count is correct, but a tx is wrong
+                    for(size_t i=0;i<checkBlock.vtx.size();i++){
                         if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
                             LogPrintf("Mismatched transaction at entry %i\n", i);
                             LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
                             LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
                         }
-                    }
-                }
-            }else if(block.vtx.size() < checkBlock.vtx.size()){
-                LogPrintf("Actual block is missing AAL transactions. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
-                for(size_t i=0;i<checkBlock.vtx.size();i++){
-                    if(i > block.vtx.size()-1){
-                        LogPrintf("Missing transaction: %s\n", checkBlock.vtx[i]->ToString());
-                    }else {
-                        if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
-                            LogPrintf("Mismatched transaction at entry %i\n", i);
-                            LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
-                            LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
-                        }
-                    }
-                }
-            }else{
-                //count is correct, but a tx is wrong
-                for(size_t i=0;i<checkBlock.vtx.size();i++){
-                    if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
-                        LogPrintf("Mismatched transaction at entry %i\n", i);
-                        LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
-                        LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
                     }
                 }
             }
-        }
-        if(checkBlock.hashUTXORoot != block.hashUTXORoot){
-            LogPrintf("Actual block data does not match hashUTXORoot expected by AAL block\n");
-        }
-        if(checkBlock.hashStateRoot != block.hashStateRoot){
-            LogPrintf("Actual block data does not match hashStateRoot expected by AAL block\n");
+            if(checkBlock.hashUTXORoot != block.hashUTXORoot){
+                LogPrintf("Actual block data does not match hashUTXORoot expected by AAL block\n");
+            }
+            if(checkBlock.hashStateRoot != block.hashStateRoot){
+                LogPrintf("Actual block data does not match hashStateRoot expected by AAL block\n");
+            }
+
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "incorrect-transactions-or-hashes-block", "ConnectBlock(): Incorrect AAL transactions or hashes (hashStateRoot, hashUTXORoot)");
         }
 
-        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "incorrect-transactions-or-hashes-block", "ConnectBlock(): Incorrect AAL transactions or hashes (hashStateRoot, hashUTXORoot)");
-    }
-
-    if (fJustCheck)
-    {
-        dev::h256 prevHashStateRoot(dev::sha3(dev::rlp("")));
-        dev::h256 prevHashUTXORoot(dev::sha3(dev::rlp("")));
-        if(pindex->pprev->hashStateRoot != uint256() && pindex->pprev->hashUTXORoot != uint256()){
-            prevHashStateRoot = uintToh256(pindex->pprev->hashStateRoot);
-            prevHashUTXORoot = uintToh256(pindex->pprev->hashUTXORoot);
+        if (fJustCheck)
+        {
+            dev::h256 prevHashStateRoot(dev::sha3(dev::rlp("")));
+            dev::h256 prevHashUTXORoot(dev::sha3(dev::rlp("")));
+            if(pindex->pprev->hashStateRoot != uint256() && pindex->pprev->hashUTXORoot != uint256()){
+                prevHashStateRoot = uintToh256(pindex->pprev->hashStateRoot);
+                prevHashUTXORoot = uintToh256(pindex->pprev->hashUTXORoot);
+            }
+            globalState->setRoot(prevHashStateRoot);
+            globalState->setRootUTXO(prevHashUTXORoot);
+            return true;
         }
-        globalState->setRoot(prevHashStateRoot);
-        globalState->setRootUTXO(prevHashUTXORoot);
-        return true;
     }
 //////////////////////////////////////////////////////////////////
 
