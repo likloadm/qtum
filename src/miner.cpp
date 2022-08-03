@@ -501,10 +501,8 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
         // Contract staking is disabled for the staker
         return false;
     }
-    if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
-        dev::h256 oldHashStateRoot(globalState->rootHash());
-        dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
-    }
+    dev::h256 oldHashStateRoot(globalState->rootHash());
+    dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
     // operate on local vars first, then later apply to `this`
     uint64_t nBlockWeight = this->nBlockWeight;
     uint64_t nBlockSigOpsCost = this->nBlockSigOpsCost;
