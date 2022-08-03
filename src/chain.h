@@ -198,7 +198,7 @@ public:
     uint32_t nNonce{0};
 
     uint64_t nNonce64{0};
-    uint256 mix_hash{0};
+    uint256 mix_hash{};
 
     uint256 hashStateRoot{}; // qtum
     uint256 hashUTXORoot{}; // qtum
@@ -413,12 +413,14 @@ public:
         READWRITE(obj.nBits);
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
-        READWRITE(obj.hashStateRoot); // qtum
+        if (nSmartActivationBlock < obj.nHeight){
+            READWRITE(obj.hashStateRoot); // qtum
             READWRITE(obj.hashUTXORoot); // qtum
             READWRITE(obj.nStakeModifier);
             READWRITE(obj.prevoutStake);
             READWRITE(obj.hashProof);
             READWRITE(obj.vchBlockSigDlgt); // qtum
+        }
     }
 
     uint256 GetBlockHash() const
