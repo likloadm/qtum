@@ -72,6 +72,7 @@ public:
     template <typename K, typename V>
     void Write(const K& key, const V& value)
     {
+        LogPrintf("THIS SHIT WRITE???\n");
         ssKey.reserve(DBWRAPPER_PREALLOC_KEY_SIZE);
         ssKey << key;
         leveldb::Slice slKey((const char*)ssKey.data(), ssKey.size());
