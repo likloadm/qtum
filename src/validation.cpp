@@ -1903,8 +1903,10 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
     // move best block pointer to prevout block
     view.SetBestBlock(pindex->pprev->GetBlockHash());
 
-    globalState->setRoot(uintToh256(pindex->pprev->hashStateRoot)); // qtum
-    globalState->setRootUTXO(uintToh256(pindex->pprev->hashUTXORoot)); // qtum
+    if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        globalState->setRoot(uintToh256(pindex->pprev->hashStateRoot)); // qtum
+        globalState->setRootUTXO(uintToh256(pindex->pprev->hashUTXORoot)); // qtum
+    }
 
     if(pfClean == NULL && fLogEvents){
         pstorageresult->deleteResults(block.vtx);
@@ -3851,17 +3853,17 @@ bool CChainState::ConnectTip(BlockValidationState& state, CBlockIndex* pindexNew
     {
         CCoinsViewCache view(&CoinsTip());
 
-        dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
-        dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
-
         bool rv = ConnectBlock(blockConnecting, state, pindexNew, view);
         GetMainSignals().BlockChecked(blockConnecting, state);
         if (!rv) {
             if (state.IsInvalid())
                 InvalidBlockFound(pindexNew, state);
-
-            globalState->setRoot(oldHashStateRoot); // qtum
-            globalState->setRootUTXO(oldHashUTXORoot); // qtum
+            if(blockConnecting.nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+                dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
+                dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
+                globalState->setRoot(oldHashStateRoot); // qtum
+                globalState->setRootUTXO(oldHashUTXORoot); // qtum
+            }
             pstorageresult->clearCacheResult();
             return error("%s: ConnectBlock %s failed, %s", __func__, pindexNew->GetBlockHash().ToString(), state.ToString());
         }
@@ -5648,12 +5650,15 @@ bool TestBlockValidity(BlockValidationState& state,
     if (!ContextualCheckBlock(block, state, chainparams.GetConsensus(), pindexPrev))
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, state.ToString());
 
-    dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
-    dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
+
 
     if (!chainstate.ConnectBlock(block, state, &indexDummy, viewNew, true)) {
-        globalState->setRoot(oldHashStateRoot); // qtum
-        globalState->setRootUTXO(oldHashUTXORoot); // qtum
+        if(block.nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+            dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
+            dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
+            globalState->setRoot(oldHashStateRoot); // qtum
+            globalState->setRootUTXO(oldHashUTXORoot); // qtum
+        }
         pstorageresult->clearCacheResult();
         return false;
     }
@@ -6010,12 +6015,13 @@ bool CVerifyDB::VerifyDB(
     int nGoodTransactions = 0;
     BlockValidationState state;
     int reportDone = 0;
-
-////////////////////////////////////////////////////////////////////////// // qtum
-    dev::h256 oldHashStateRoot(globalState->rootHash());
-    dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
-    QtumDGP qtumDGP(globalState.get(), chainstate, fGettingValuesDGP);
-//////////////////////////////////////////////////////////////////////////
+    if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+    ////////////////////////////////////////////////////////////////////////// // qtum
+        dev::h256 oldHashStateRoot(globalState->rootHash());
+        dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
+        QtumDGP qtumDGP(globalState.get(), chainstate, fGettingValuesDGP);
+    //////////////////////////////////////////////////////////////////////////
+    }
 
     LogPrintf("[0%%]..."); /* Continued */
 
@@ -6101,20 +6107,25 @@ bool CVerifyDB::VerifyDB(
             if (!ReadBlockFromDisk(block, pindex, chainparams.GetConsensus()))
                 return error("VerifyDB(): *** ReadBlockFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
 
-            dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
-            dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
+
 
             if (!chainstate.ConnectBlock(block, state, pindex, coins)) {
-                globalState->setRoot(oldHashStateRoot); // qtum
-                globalState->setRootUTXO(oldHashUTXORoot); // qtum
+                if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+                    dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
+                    dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
+                    globalState->setRoot(oldHashStateRoot); // qtum
+                    globalState->setRootUTXO(oldHashUTXORoot); // qtum
+                }
                 pstorageresult->clearCacheResult();
                 return error("VerifyDB(): *** found unconnectable block at %d, hash=%s (%s)", pindex->nHeight, pindex->GetBlockHash().ToString(), state.ToString());
             }
             if (ShutdownRequested()) return true;
         }
     } else {
-        globalState->setRoot(oldHashStateRoot); // qtum
-        globalState->setRootUTXO(oldHashUTXORoot); // qtum
+        if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+            globalState->setRoot(oldHashStateRoot); // qtum
+            globalState->setRootUTXO(oldHashUTXORoot); // qtum
+        }
     }
 
     LogPrintf("[DONE].\n");
