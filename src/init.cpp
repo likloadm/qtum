@@ -1847,10 +1847,12 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
             try {
                 LOCK(cs_main);
-
                 CChain& active_chain = chainman.ActiveChain();
-                QtumDGP qtumDGP(globalState.get(), chainman.ActiveChainstate(), fGettingValuesDGP);
-                globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(active_chain.Height() + (active_chain.Height()+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1) ));
+
+                if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock){
+                    QtumDGP qtumDGP(globalState.get(), chainman.ActiveChainstate(), fGettingValuesDGP);
+                    globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(active_chain.Height() + (active_chain.Height()+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1) ));
+                }
 
                 for (CChainState* chainstate : chainman.GetAll()) {
                     if (!is_coinsview_empty(chainstate)) {
