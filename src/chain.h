@@ -411,16 +411,15 @@ public:
         READWRITE(obj.hashMerkleRoot);
         READWRITE(obj.nTime);
         READWRITE(obj.nBits);
+        READWRITE(obj.nNonce);
+        READWRITE(obj.hashStateRoot); // qtum
+        READWRITE(obj.hashUTXORoot); // qtum
+        READWRITE(obj.nStakeModifier);
+        READWRITE(obj.prevoutStake);
+        READWRITE(obj.hashProof);
+        READWRITE(obj.vchBlockSigDlgt); // qtum
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
-        if (nSmartActivationBlock < obj.nHeight){
-            READWRITE(obj.hashStateRoot); // qtum
-            READWRITE(obj.hashUTXORoot); // qtum
-            READWRITE(obj.nStakeModifier);
-            READWRITE(obj.prevoutStake);
-            READWRITE(obj.hashProof);
-            READWRITE(obj.vchBlockSigDlgt); // qtum
-        }
     }
 
     uint256 GetBlockHash() const
