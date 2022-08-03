@@ -709,7 +709,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nMoneySupply   = diskindex.nMoneySupply;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
-                if (Params().GetConsensus().nSmartActivationBlock < obj.nHeight){
+                if (Params().GetConsensus().nSmartActivationBlock < diskindex.nHeight){
                     pindexNew->hashStateRoot  = diskindex.hashStateRoot; // qtum
                     pindexNew->hashUTXORoot   = diskindex.hashUTXORoot; // qtum
                     pindexNew->nStakeModifier = diskindex.nStakeModifier;
