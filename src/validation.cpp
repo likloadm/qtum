@@ -3858,7 +3858,7 @@ bool CChainState::ConnectTip(BlockValidationState& state, CBlockIndex* pindexNew
         if (!rv) {
             if (state.IsInvalid())
                 InvalidBlockFound(pindexNew, state);
-            if(blockConnecting.nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+            if(blockConnecting.IsSmartContractsActivated()){
                 dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
                 dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
                 globalState->setRoot(oldHashStateRoot); // qtum
