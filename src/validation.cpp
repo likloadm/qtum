@@ -6017,12 +6017,12 @@ bool CVerifyDB::VerifyDB(
     int reportDone = 0;
     dev::h256 oldHashStateRoot;
     dev::h256 oldHashUTXORoot;
-    QtumDGP qtumDGP;
+    QtumDGP qtumDGP(globalState.get(), chainstate, fGettingValuesDGP);
     if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
     ////////////////////////////////////////////////////////////////////////// // qtum
         dev::h256 oldHashStateRoot(globalState->rootHash());
         dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
-        QtumDGP qtumDGP(globalState.get(), chainstate, fGettingValuesDGP);
+
     //////////////////////////////////////////////////////////////////////////
     }
 
