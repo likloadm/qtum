@@ -2746,10 +2746,10 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
         uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1));
         dgpMaxBlockSize = sizeBlockDGP ? sizeBlockDGP : dgpMaxBlockSize;
         updateBlockSizeParams(dgpMaxBlockSize);
-        CBlock checkBlock(block.GetBlockHeader());
-        std::vector<CTxOut> checkVouts;
         /////////////////////////////////////////////////
     }
+    CBlock checkBlock(block.GetBlockHeader());
+    std::vector<CTxOut> checkVouts;
 
     // We recheck the hardened checkpoints here since ContextualCheckBlock(Header) is not called in ConnectBlock.
     if(fCheckpointsEnabled && !m_blockman.CheckHardened(pindex->nHeight, block.GetHash(), m_params.Checkpoints())) {
