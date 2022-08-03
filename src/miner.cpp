@@ -286,26 +286,28 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     txGasLimit = gArgs.GetArg("-staker-max-tx-gas-limit", softBlockGasLimit);
 
     nBlockMaxWeight = blockSizeDGP ? blockSizeDGP * WITNESS_SCALE_FACTOR : nBlockMaxWeight;
-    
-    dev::h256 oldHashStateRoot(globalState->rootHash());
-    dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
-    ////////////////////////////////////////////////// deploy offline staking contract
-    if(nHeight == chainparams.GetConsensus().nOfflineStakeHeight){
-        globalState->deployDelegationsContract();
-    }
-    /////////////////////////////////////////////////
-    int nPackagesSelected = 0;
-    int nDescendantsUpdated = 0;
-    addPackageTxs(nPackagesSelected, nDescendantsUpdated, minGasPrice, pblock);
-    pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
-    pblock->hashUTXORoot = uint256(h256Touint(dev::h256(globalState->rootHashUTXO())));
-    globalState->setRoot(oldHashStateRoot);
-    globalState->setRootUTXO(oldHashUTXORoot);
 
-    //this should already be populated by AddBlock in case of contracts, but if no contracts
-    //then it won't get populated
-    RebuildRefundTransaction(pblock);
-    ////////////////////////////////////////////////////////
+    if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        dev::h256 oldHashStateRoot(globalState->rootHash());
+        dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
+        ////////////////////////////////////////////////// deploy offline staking contract
+        if(nHeight == chainparams.GetConsensus().nOfflineStakeHeight){
+            globalState->deployDelegationsContract();
+        }
+        /////////////////////////////////////////////////
+        int nPackagesSelected = 0;
+        int nDescendantsUpdated = 0;
+        addPackageTxs(nPackagesSelected, nDescendantsUpdated, minGasPrice, pblock);
+        pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
+        pblock->hashUTXORoot = uint256(h256Touint(dev::h256(globalState->rootHashUTXO())));
+        globalState->setRoot(oldHashStateRoot);
+        globalState->setRootUTXO(oldHashUTXORoot);
+        //this should already be populated by AddBlock in case of contracts, but if no contracts
+        //then it won't get populated
+        RebuildRefundTransaction(pblock);
+        ////////////////////////////////////////////////////////
+    }
+
 
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus(), fProofOfStake);
     pblocktemplate->vTxFees[0] = -nFees;
@@ -419,14 +421,15 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateEmptyBlock(const CScript& 
         //real prevoutstake info is filled in later in SignBlock
         pblock->prevoutStake.n=0;
     }
+    if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        //////////////////////////////////////////////////////// qtum
+        //state shouldn't change here for an empty block, but if it's not valid it'll fail in CheckBlock later
+        pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
+        pblock->hashUTXORoot = uint256(h256Touint(dev::h256(globalState->rootHashUTXO())));
 
-    //////////////////////////////////////////////////////// qtum
-    //state shouldn't change here for an empty block, but if it's not valid it'll fail in CheckBlock later
-    pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
-    pblock->hashUTXORoot = uint256(h256Touint(dev::h256(globalState->rootHashUTXO())));
-
-    RebuildRefundTransaction(pblock);
-    ////////////////////////////////////////////////////////
+        RebuildRefundTransaction(pblock);
+        ////////////////////////////////////////////////////////
+    }
 
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus(), fProofOfStake);
     pblocktemplate->vTxFees[0] = -nFees;
@@ -498,9 +501,10 @@ bool BlockAssembler::AttemptToAddContractToBlock(CTxMemPool::txiter iter, uint64
         // Contract staking is disabled for the staker
         return false;
     }
-    
-    dev::h256 oldHashStateRoot(globalState->rootHash());
-    dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
+    if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        dev::h256 oldHashStateRoot(globalState->rootHash());
+        dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
+    }
     // operate on local vars first, then later apply to `this`
     uint64_t nBlockWeight = this->nBlockWeight;
     uint64_t nBlockSigOpsCost = this->nBlockSigOpsCost;
@@ -849,7 +853,7 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
             }
             const CTransaction& tx = sortedEntries[i]->GetTx();
             if(wasAdded) {
-                if (tx.HasCreateOrCall()) {
+                if (nHeight > chainparams.GetConsensus().nSmartActivationBlock && tx.HasCreateOrCall()) {
                     wasAdded = AttemptToAddContractToBlock(sortedEntries[i], minGasPrice, pblock);
                     if(!wasAdded){
                         if(fUsingModified) {
