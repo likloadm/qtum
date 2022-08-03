@@ -1902,7 +1902,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
 
     // move best block pointer to prevout block
     view.SetBestBlock(pindex->pprev->GetBlockHash());
-
+    const CChainParams& chainparams = Params();
     if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
         globalState->setRoot(uintToh256(pindex->pprev->hashStateRoot)); // qtum
         globalState->setRootUTXO(uintToh256(pindex->pprev->hashUTXORoot)); // qtum
@@ -1914,7 +1914,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
     }
 
     // The stake and delegate index is needed for MPoS, update it while MPoS is active
-    const CChainParams& chainparams = Params();
+
     if(pindex->nHeight <= chainparams.GetConsensus().nLastMPoSBlock)
     {
         pblocktree->EraseStakeIndex(pindex->nHeight);
