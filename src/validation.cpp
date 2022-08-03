@@ -6015,6 +6015,9 @@ bool CVerifyDB::VerifyDB(
     int nGoodTransactions = 0;
     BlockValidationState state;
     int reportDone = 0;
+    dev::h256 oldHashStateRoot;
+    dev::h256 oldHashUTXORoot;
+    QtumDGP qtumDGP;
     if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
     ////////////////////////////////////////////////////////////////////////// // qtum
         dev::h256 oldHashStateRoot(globalState->rootHash());
