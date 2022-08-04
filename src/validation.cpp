@@ -2737,7 +2737,6 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
 
-    CBlock checkBlock(block.GetBlockHeader());
     std::vector<CTxOut> checkVouts;
 
     // We recheck the hardened checkpoints here since ContextualCheckBlock(Header) is not called in ConnectBlock.
@@ -3094,10 +3093,12 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
         if(!CheckOpSender(tx, m_params, pindex->nHeight)){
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-invalid-sender");
         }
-        if(!tx.HasOpSpend()){
-            checkBlock.vtx.push_back(block.vtx[i]);
-        }
+
         if(block.nHeight > m_params.GetConsensus().nSmartActivationBlock){
+            CBlock checkBlock(block.GetBlockHeader());
+            if(!tx.HasOpSpend()){
+                checkBlock.vtx.push_back(block.vtx[i]);
+            }
             ///////////////////////////////////////////////// // qtum
             QtumDGP qtumDGP(globalState.get(), *this, fGettingValuesDGP);
             globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1) ));
