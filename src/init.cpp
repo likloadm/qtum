@@ -1816,10 +1816,8 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
             /////////////////////////////////////////////////////////// qtum
             LOCK(cs_main);
             CChain& active_chain = chainman.ActiveChain();
-//            if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock)
-//            {
-//
-//            }
+            if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock)
+            {
                 dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
                 if(active_chain.Tip() != nullptr){
                     globalState->setRoot(uintToh256(active_chain.Tip()->hashStateRoot));
@@ -1831,6 +1829,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 }
                 globalState->db().commit();
                 globalState->dbUtxo().commit();
+            }
             ///////////////////////////////////////////////////////////////
 
             if (!fReset) {
