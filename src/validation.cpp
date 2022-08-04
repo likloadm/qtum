@@ -2737,6 +2737,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
 
+    CBlock checkBlock(block.GetBlockHeader());
     std::vector<CTxOut> checkVouts;
 
     // We recheck the hardened checkpoints here since ContextualCheckBlock(Header) is not called in ConnectBlock.
@@ -3095,7 +3096,6 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
         }
 
         if(block.nHeight > m_params.GetConsensus().nSmartActivationBlock){
-            CBlock checkBlock(block.GetBlockHeader());
             if(!tx.HasOpSpend()){
                 checkBlock.vtx.push_back(block.vtx[i]);
             }
