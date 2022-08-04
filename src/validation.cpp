@@ -5654,6 +5654,8 @@ bool TestBlockValidity(BlockValidationState& state,
 
 
 
+
+
     if (!chainstate.ConnectBlock(block, state, &indexDummy, viewNew, true)) {
         if(block.nHeight > chainparams.GetConsensus().nSmartActivationBlock){
             dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
@@ -6017,16 +6019,8 @@ bool CVerifyDB::VerifyDB(
     int nGoodTransactions = 0;
     BlockValidationState state;
     int reportDone = 0;
-    dev::h256 oldHashStateRoot;
-    dev::h256 oldHashUTXORoot;
-    QtumDGP qtumDGP(globalState.get(), chainstate, fGettingValuesDGP);
-    if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
-    ////////////////////////////////////////////////////////////////////////// // qtum
-        dev::h256 oldHashStateRoot(globalState->rootHash());
-        dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
 
-    //////////////////////////////////////////////////////////////////////////
-    }
+    QtumDGP qtumDGP(globalState.get(), chainstate, fGettingValuesDGP);
 
     LogPrintf("[0%%]..."); /* Continued */
 
@@ -6128,6 +6122,8 @@ bool CVerifyDB::VerifyDB(
         }
     } else {
         if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+            dev::h256 oldHashStateRoot(globalState->rootHash());
+            dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
             globalState->setRoot(oldHashStateRoot); // qtum
             globalState->setRootUTXO(oldHashUTXORoot); // qtum
         }
