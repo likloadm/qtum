@@ -1903,7 +1903,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
     // move best block pointer to prevout block
     view.SetBestBlock(pindex->pprev->GetBlockHash());
     const CChainParams& chainparams = Params();
-    if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+    if(pindex->nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
         globalState->setRoot(uintToh256(pindex->pprev->hashStateRoot)); // qtum
         globalState->setRootUTXO(uintToh256(pindex->pprev->hashUTXORoot)); // qtum
     }
@@ -3095,7 +3095,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-invalid-sender");
         }
 
-        if(block.nHeight > m_params.GetConsensus().nSmartActivationBlock){
+        if(block.nHeight >= m_params.GetConsensus().nSmartActivationBlock){
             if(!tx.HasOpSpend()){
                 checkBlock.vtx.push_back(block.vtx[i]);
             }
@@ -3300,7 +3300,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     LogPrint(BCLog::BENCH, "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs (%.2fms/blk)]\n", nInputs - 1, MILLI * (nTime4 - nTime2), nInputs <= 1 ? 0 : MILLI * (nTime4 - nTime2) / (nInputs-1), nTimeVerify * MICRO, nTimeVerify * MILLI / nBlocksTotal);
 
 ////////////////////////////////////////////////////////////////// // qtum
-    if(pindex->nHeight > m_params.GetConsensus().nSmartActivationBlock){
+    if(pindex->nHeight >= m_params.GetConsensus().nSmartActivationBlock){
         if(pindex->nHeight == m_params.GetConsensus().nOfflineStakeHeight){
             globalState->deployDelegationsContract();
         }
@@ -5658,7 +5658,7 @@ bool TestBlockValidity(BlockValidationState& state,
 
 
     if (!chainstate.ConnectBlock(block, state, &indexDummy, viewNew, true)) {
-        if(block.nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        if(block.nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
             dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
             dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
             globalState->setRoot(oldHashStateRoot); // qtum
@@ -6110,7 +6110,7 @@ bool CVerifyDB::VerifyDB(
 
 
             if (!chainstate.ConnectBlock(block, state, pindex, coins)) {
-                if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+                if(pindex->nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
                     dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
                     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
                     globalState->setRoot(oldHashStateRoot); // qtum
@@ -6122,7 +6122,7 @@ bool CVerifyDB::VerifyDB(
             if (ShutdownRequested()) return true;
         }
     } else {
-        if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        if(pindex->nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
             dev::h256 oldHashStateRoot(globalState->rootHash());
             dev::h256 oldHashUTXORoot(globalState->rootHashUTXO());
             globalState->setRoot(oldHashStateRoot); // qtum

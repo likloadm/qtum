@@ -144,7 +144,7 @@ public:
         consensus.powLimit = uint256S("01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.CSVHeight = 0; // 000000000000000004a1b34462cb8aeebd5799177f7a29cf28f2d1961716b5b5
         consensus.SegwitHeight = 1; // 0000000000000000001c8018d9cb3b742ef25114f27563e3fc4a1902167f9893
-        consensus.nSmartActivationBlock = 1000; // 0000000000000000001c8018d9cb3b742ef25114f27563e3fc4a1902167f9893
+        consensus.nSmartActivationBlock = 0;
         consensus.MinBIP9WarningHeight = 8064; // segwit activation height + miner confirmation window
         consensus.QIP5Height = 466600;
         consensus.QIP6Height = 466600;
@@ -210,14 +210,14 @@ public:
         m_assumed_chain_state_size = 0;
 
         genesis = CreateGenesisBlock(1645356868, 0, 0x1e00ffff, 1, 50 * COIN, 38899382, uint256S("0x0000000000000000000000000000000000000000000000000000000000000000"));
-//        devnetGenesis = FindGenesisBlock();
+        devnetGenesis = FindGenesisBlock();
         consensus.hashGenesisBlock = genesis.GetHash();
         hashStateRoot = uint256(h256Touint(dev::h256("e965ffd002cd6ad0e2dc402b8044de833e06b23127ea8c3d80aec91410771495"))); // qtum
         hashUTXORoot = uint256(h256Touint(dev::sha3(dev::rlp("")))); // qtum
-//        LogPrintf("block string %s\n", genesis.ToString());
+        LogPrintf("block string %s\n", genesis.ToString());
 //
 //
-//        LogPrintf("NEW genesis %s\n", devnetGenesis.ToString());
+        LogPrintf("NEW genesis %s\n", devnetGenesis.ToString());
 
 //        assert(consensus.hashGenesisBlock == uint256S("0xa04b0c9573c21311658ad15447d9a57fd9547263d11747e963f8b6353b6e4d04"));
 //        assert(genesis.hashMerkleRoot == uint256S("0xed34050eb5909ee535fcb07af292ea55f3d2f291187617b44d3282231405b96d"));
