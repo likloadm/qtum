@@ -103,8 +103,8 @@ static CBlock FindGenesisBlock()
 
         uint256 hash = block.GetHash();
 
-        if(CheckPoW(hash, block.nBits, uint256S("0000ffff00000000000000000000000000000000000000000000000000000000")) ) {
-        {
+        if (CheckPoW(hash, block.nBits, uint256S("01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))) {
+
                     uint256 mix_hash;
                     uint256 hashfull = block.GetHashFull(mix_hash);
 
@@ -118,8 +118,9 @@ static CBlock FindGenesisBlock()
                     std::cout.flush();
                     return block;
 
+
         }
-    }
+        }
 
     assert(false);
 }
