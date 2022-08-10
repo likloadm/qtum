@@ -1824,7 +1824,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                     globalState->setRootUTXO(uintToh256(active_chain.Tip()->hashUTXORoot));
                 } else {
                     globalState->setRoot(dev::sha3(dev::rlp("")));
-                    globalState->setRootUTXO(uintToh256(chainparams.HashUTXORoot()));
+                    globalState->setRootUTXO(uintToh256(chainparams.GenesisBlock().hashUTXORoot));
                     globalState->populateFrom(cp.genesisState);
                 }
                 globalState->db().commit();
