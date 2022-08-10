@@ -57,12 +57,12 @@ public:
         READWRITE(obj.nHeight);
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
-        //if (nSmartActivationBlock < obj.nHeight){
+        if (nSmartActivationBlock < obj.nHeight){
             READWRITE(obj.hashStateRoot);
             READWRITE(obj.hashUTXORoot);
             READWRITE(obj.prevoutStake);
             READWRITE(obj.vchBlockSigDlgt);
-        //}
+        }
     }
 
     void SetNull()
@@ -101,6 +101,11 @@ public:
     int64_t GetBlockTime() const
     {
         return (int64_t)nTime;
+    }
+
+    virtual bool IsSmartContractsActivated() const //qtum
+    {
+        return nSmartActivationBlock <= nHeight;
     }
 
     // ppcoin: two types of block: proof-of-work or proof-of-stake
