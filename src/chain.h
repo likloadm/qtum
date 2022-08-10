@@ -198,7 +198,7 @@ public:
     uint32_t nNonce{0};
 
     uint64_t nNonce64{0};
-    uint256 mix_hash{};
+    uint256 mix_hash{0};
 
     uint256 hashStateRoot{}; // qtum
     uint256 hashUTXORoot{}; // qtum
@@ -278,6 +278,8 @@ public:
     {
         return *phashBlock;
     }
+
+
 
     /**
      * Check whether this block's and all previous blocks' transactions have been
@@ -411,15 +413,16 @@ public:
         READWRITE(obj.hashMerkleRoot);
         READWRITE(obj.nTime);
         READWRITE(obj.nBits);
-        READWRITE(obj.nNonce);
-        READWRITE(obj.hashStateRoot); // qtum
-        READWRITE(obj.hashUTXORoot); // qtum
-        READWRITE(obj.nStakeModifier);
-        READWRITE(obj.prevoutStake);
-        READWRITE(obj.hashProof);
-        READWRITE(obj.vchBlockSigDlgt); // qtum
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
+        // if (nSmartActivationBlock < obj.nHeight){
+            READWRITE(obj.hashStateRoot); // qtum
+            READWRITE(obj.hashUTXORoot); // qtum
+            READWRITE(obj.nStakeModifier);
+            READWRITE(obj.prevoutStake);
+            READWRITE(obj.hashProof);
+            READWRITE(obj.vchBlockSigDlgt); // qtum
+        //}
     }
 
     uint256 GetBlockHash() const
@@ -437,7 +440,7 @@ public:
         block.prevoutStake    = prevoutStake;
         block.nHeight = nHeight;
         block.nNonce64 = nNonce64;
-        block.mix_hash = mix_hash;
+        block.mix_hash = mix_hash;        
         return block.GetHash();
     }
 

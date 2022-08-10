@@ -18,7 +18,7 @@
  * of the block.
  */
 
-static const uint32_t nSmartActivationBlock = 0;
+static const uint32_t nSmartActivationBlock = 1000;
 
 class CBlockHeader
 {
@@ -31,7 +31,7 @@ public:
     uint32_t nBits;
     uint32_t nNonce;
 
-    int nHeight;
+    uint32_t nHeight;
     uint64_t nNonce64;
     uint256 mix_hash;
 
@@ -57,12 +57,12 @@ public:
         READWRITE(obj.nHeight);
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
-        if (nSmartActivationBlock <= obj.nHeight){
+        //if (nSmartActivationBlock < obj.nHeight){
             READWRITE(obj.hashStateRoot);
             READWRITE(obj.hashUTXORoot);
             READWRITE(obj.prevoutStake);
             READWRITE(obj.vchBlockSigDlgt);
-        }
+        //}
     }
 
     void SetNull()
@@ -107,11 +107,6 @@ public:
     virtual bool IsProofOfStake() const //qtum
     {
         return !prevoutStake.IsNull();
-    }
-
-    virtual bool IsSmartContractsActivated() const //qtum
-    {
-        return nSmartActivationBlock <= nHeight;
     }
 
     virtual bool IsProofOfWork() const
