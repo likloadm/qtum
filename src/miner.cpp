@@ -269,7 +269,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
     }
 
-    if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+    if(nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
         //////////////////////////////////////////////////////// qtum
         QtumDGP qtumDGP(globalState.get(), m_chainstate, fGettingValuesDGP);
         globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(nHeight));
@@ -421,7 +421,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateEmptyBlock(const CScript& 
         //real prevoutstake info is filled in later in SignBlock
         pblock->prevoutStake.n=0;
     }
-    if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+    if(nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
         //////////////////////////////////////////////////////// qtum
         //state shouldn't change here for an empty block, but if it's not valid it'll fail in CheckBlock later
         pblock->hashStateRoot = uint256(h256Touint(dev::h256(globalState->rootHash())));
@@ -851,7 +851,7 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
             }
             const CTransaction& tx = sortedEntries[i]->GetTx();
             if(wasAdded) {
-                if (nHeight > chainparams.GetConsensus().nSmartActivationBlock && tx.HasCreateOrCall()) {
+                if (nHeight >= chainparams.GetConsensus().nSmartActivationBlock && tx.HasCreateOrCall()) {
                     wasAdded = AttemptToAddContractToBlock(sortedEntries[i], minGasPrice, pblock);
                     if(!wasAdded){
                         if(fUsingModified) {

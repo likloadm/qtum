@@ -1709,7 +1709,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 /////////////////////////////////////////////////////////// qtum
                 LOCK(cs_main);
                 CChain& active_chain = chainman.ActiveChain();
-                if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock){
+                if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
                     if((args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) || (!args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) ||
                       (!args.IsArgSet("-dgpstorage") && !args.IsArgSet("-dgpevm"))){
                         fGettingValuesDGP = true;
@@ -1816,7 +1816,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
             /////////////////////////////////////////////////////////// qtum
             LOCK(cs_main);
             CChain& active_chain = chainman.ActiveChain();
-            if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock)
+            if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock)
             {
                 dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
                 if(active_chain.Tip() != nullptr){
@@ -1849,7 +1849,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 LOCK(cs_main);
 
                 CChain& active_chain = chainman.ActiveChain();
-                if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock){
+                if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
                     QtumDGP qtumDGP(globalState.get(), chainman.ActiveChainstate(), fGettingValuesDGP);
                     globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(active_chain.Height() + (active_chain.Height()+1 >= chainparams.GetConsensus().QIP7Height ? 0 : 1) ));
                 }
