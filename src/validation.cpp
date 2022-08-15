@@ -1411,7 +1411,6 @@ bool CheckIndexProof(const CBlockIndex& block, const Consensus::Params& consensu
         } else {
 //	        LogPrintf("FUCK ME 4 \n");
             CBlockHeader header = block.GetBlockHeader();
-            LogPrintf(header.ToString();
             std::cout<<"GENERATE FUCK ME"<<std::endl;
             std::cout<<"block.hashMerkleRoot: " << header.hashMerkleRoot.ToString()<<std::endl;
             std::cout<<"block.hashPrevBlock: " << header.hashPrevBlock.ToString()<<std::endl;
