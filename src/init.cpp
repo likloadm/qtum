@@ -110,7 +110,6 @@ static const bool DEFAULT_REST_ENABLE = false;
 
 static const char* DEFAULT_ASMAP_FILENAME="ip_asn.map";
 
-static const uint32_t nSmartActivationBlock = 1000;
 /**
  * The PID file facilities.
  */
