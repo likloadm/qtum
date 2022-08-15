@@ -109,6 +109,11 @@ public:
         return !prevoutStake.IsNull();
     }
 
+    virtual bool IsSmartContractsActivated() const //qtum
+    {
+        return nSmartActivationBlock <= nHeight;
+    }
+
     virtual bool IsProofOfWork() const
     {
         return !IsProofOfStake();
