@@ -2761,18 +2761,6 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     assert(*pindex->phashBlock == block.GetHash());
     int64_t nTimeStart = GetTimeMicros();
 
-    ///////////////////////////////////////////////// // qtum
-    QtumDGP qtumDGP(globalState.get(), *this, fGettingValuesDGP);
-    globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1) ));
-    uint32_t sizeBlockDGP = qtumDGP.getBlockSize(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1));
-    uint64_t minGasPrice = qtumDGP.getMinGasPrice(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1));
-    uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1));
-    dgpMaxBlockSize = sizeBlockDGP ? sizeBlockDGP : dgpMaxBlockSize;
-    updateBlockSizeParams(dgpMaxBlockSize);
-    CBlock checkBlock(block.GetBlockHeader());
-    std::vector<CTxOut> checkVouts;
-
-    /////////////////////////////////////////////////
     // We recheck the hardened checkpoints here since ContextualCheckBlock(Header) is not called in ConnectBlock.
     if(fCheckpointsEnabled && !m_blockman.CheckHardened(pindex->nHeight, block.GetHash(), m_params.Checkpoints())) {
         return state.Invalid(BlockValidationResult::BLOCK_CHECKPOINT, "bad-fork-hardened-checkpoint", strprintf("%s: expected hardened checkpoint at height %d", __func__, pindex->nHeight));
@@ -3132,149 +3120,158 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
         if(!CheckOpSender(tx, m_params, pindex->nHeight)){
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-invalid-sender");
         }
-        if(!tx.HasOpSpend()){
-            checkBlock.vtx.push_back(block.vtx[i]);
-        }
-        if(tx.HasCreateOrCall() && !hasOpSpend){
-
-            if(!CheckSenderScript(view, tx)){
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-invalid-sender-script");
+        if(block.nHeight > m_params.GetConsensus().nSmartActivationBlock){
+            if(!tx.HasOpSpend()){
+                checkBlock.vtx.push_back(block.vtx[i]);
             }
+            QtumDGP qtumDGP(globalState.get(), *this, fGettingValuesDGP);
+            globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1) ));
+            uint32_t sizeBlockDGP = qtumDGP.getBlockSize(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1));
+            uint64_t minGasPrice = qtumDGP.getMinGasPrice(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1));
+            uint64_t blockGasLimit = qtumDGP.getBlockGasLimit(pindex->nHeight + (pindex->nHeight+1 >= m_params.GetConsensus().QIP7Height ? 0 : 1));
+            dgpMaxBlockSize = sizeBlockDGP ? sizeBlockDGP : dgpMaxBlockSize;
+            updateBlockSizeParams(dgpMaxBlockSize);
+            if(tx.HasCreateOrCall() && !hasOpSpend){
 
-            QtumTxConverter convert(tx, *this, m_mempool, &view, &block.vtx, contractflags);
-
-            ExtractQtumTX resultConvertQtumTX;
-            if(!convert.extractionQtumTransactions(resultConvertQtumTX)){
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-bad-contract-format", "ConnectBlock(): Contract transaction of the wrong format");
-            }
-            if(!CheckMinGasPrice(resultConvertQtumTX.second, minGasPrice))
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-low-gas-price", "ConnectBlock(): Contract execution has lower gas price than allowed");
-
-
-            dev::u256 gasAllTxs = dev::u256(0);
-            ByteCodeExec exec(block, resultConvertQtumTX.first, blockGasLimit, pindex->pprev, m_chain);
-            //validate VM version and other ETH params before execution
-            //Reject anything unknown (could be changed later by DGP)
-            //TODO evaluate if this should be relaxed for soft-fork purposes
-            bool nonZeroVersion=false;
-            dev::u256 sumGas = dev::u256(0);
-            CAmount nTxFee = view.GetValueIn(tx)-tx.GetValueOut();
-            for(QtumTransaction& qtx : resultConvertQtumTX.first){
-                sumGas += qtx.gas() * qtx.gasPrice();
-
-                if(sumGas > dev::u256(INT64_MAX)) {
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-gas-stipend-overflow", "ConnectBlock(): Transaction's gas stipend overflows");
+                if(!CheckSenderScript(view, tx)){
+                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-invalid-sender-script");
                 }
 
-                if(sumGas > dev::u256(nTxFee)) {
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-fee-notenough", "ConnectBlock(): Transaction fee does not cover the gas stipend");
+                QtumTxConverter convert(tx, *this, m_mempool, &view, &block.vtx, contractflags);
+
+                ExtractQtumTX resultConvertQtumTX;
+                if(!convert.extractionQtumTransactions(resultConvertQtumTX)){
+                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-bad-contract-format", "ConnectBlock(): Contract transaction of the wrong format");
                 }
-
-                VersionVM v = qtx.getVersion();
-                if(v.format!=0)
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-format", "ConnectBlock(): Contract execution uses unknown version format");
-                if(v.rootVM != 0){
-                    nonZeroVersion=true;
-                }else{
-                    if(nonZeroVersion){
-                        //If an output is version 0, then do not allow any other versions in the same tx
-                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-mixed-zero-versions", "ConnectBlock(): Contract tx has mixed version 0 and non-0 VM executions");
-                    }
-                }
-                if(!(v.rootVM == 0 || v.rootVM == 1))
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-rootvm", "ConnectBlock(): Contract execution uses unknown root VM");
-                if(v.vmVersion != 0)
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-vmversion", "ConnectBlock(): Contract execution uses unknown VM version");
-                if(v.flagOptions != 0)
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-flags", "ConnectBlock(): Contract execution uses unknown flag options");
-
-                //check gas limit is not less than minimum gas limit (unless it is a no-exec tx)
-                if(qtx.gas() < MINIMUM_GAS_LIMIT && v.rootVM != 0)
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-too-little-gas", "ConnectBlock(): Contract execution has lower gas limit than allowed");
-
-                if(qtx.gas() > UINT32_MAX)
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-too-much-gas", "ConnectBlock(): Contract execution can not specify greater gas limit than can fit in 32-bits");
-
-                gasAllTxs += qtx.gas();
-                if(gasAllTxs > dev::u256(blockGasLimit))
-                    return state.Invalid(BlockValidationResult::BLOCK_GAS_EXCEEDS_LIMIT, "bad-txns-gas-exceeds-blockgaslimit");
-
-                //don't allow less than DGP set minimum gas price to prevent MPoS greedy mining/spammers
-                if(v.rootVM!=0 && (uint64_t)qtx.gasPrice() < minGasPrice)
+                if(!CheckMinGasPrice(resultConvertQtumTX.second, minGasPrice))
                     return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-low-gas-price", "ConnectBlock(): Contract execution has lower gas price than allowed");
-            }
 
-            if(!nonZeroVersion){
-                //if tx is 0 version, then the tx must already have been added by a previous contract execution
-                if(!tx.HasOpSpend()){
-                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-improper-version-0", "ConnectBlock(): Version 0 contract executions are not allowed unless created by the AAL");
-                }
-            }
 
-            if(!exec.performByteCode()){
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-unknown-error", "ConnectBlock(): Unknown error during contract execution");
-            }
+                dev::u256 gasAllTxs = dev::u256(0);
+                ByteCodeExec exec(block, resultConvertQtumTX.first, blockGasLimit, pindex->pprev, m_chain);
+                //validate VM version and other ETH params before execution
+                //Reject anything unknown (could be changed later by DGP)
+                //TODO evaluate if this should be relaxed for soft-fork purposes
+                bool nonZeroVersion=false;
+                dev::u256 sumGas = dev::u256(0);
+                CAmount nTxFee = view.GetValueIn(tx)-tx.GetValueOut();
+                for(QtumTransaction& qtx : resultConvertQtumTX.first){
+                    sumGas += qtx.gas() * qtx.gasPrice();
 
-            std::vector<ResultExecute> resultExec(exec.getResult());
-            ByteCodeExecResult bcer;
-            if(!exec.processingResults(bcer)){
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-vm-exec-processing", "ConnectBlock(): Error processing VM execution results");
-            }
-
-            std::vector<TransactionReceiptInfo> tri;
-            if (fLogEvents && !fJustCheck)
-            {
-                uint64_t countCumulativeGasUsed = blockGasUsed;
-                for(size_t k = 0; k < resultConvertQtumTX.first.size(); k ++){
-                    for(auto& log : resultExec[k].txRec.log()) {
-                        if(!heightIndexes.count(log.address)){
-                            heightIndexes[log.address].first = CHeightTxIndexKey(pindex->nHeight, log.address);
-                        }
-                        heightIndexes[log.address].second.push_back(tx.GetHash());
+                    if(sumGas > dev::u256(INT64_MAX)) {
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-gas-stipend-overflow", "ConnectBlock(): Transaction's gas stipend overflows");
                     }
-                    uint64_t gasUsed = uint64_t(resultExec[k].execRes.gasUsed);
-                    countCumulativeGasUsed += gasUsed;
-                    tri.push_back(TransactionReceiptInfo{
-                        block.GetHash(),
-                        uint32_t(pindex->nHeight),
-                        tx.GetHash(),
-                        uint32_t(i),
-                        resultConvertQtumTX.first[k].from(),
-                        resultConvertQtumTX.first[k].to(),
-                        countCumulativeGasUsed,
-                        gasUsed,
-                        resultExec[k].execRes.newAddress,
-                        resultExec[k].txRec.log(),
-                        resultExec[k].execRes.excepted,
-                        exceptedMessage(resultExec[k].execRes.excepted, resultExec[k].execRes.output),
-                        resultConvertQtumTX.first[k].getNVout(),
-                        resultExec[k].txRec.bloom(),
-                        resultExec[k].txRec.stateRoot(),
-                        resultExec[k].txRec.utxoRoot(),
-                    });
+
+                    if(sumGas > dev::u256(nTxFee)) {
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-fee-notenough", "ConnectBlock(): Transaction fee does not cover the gas stipend");
+                    }
+
+                    VersionVM v = qtx.getVersion();
+                    if(v.format!=0)
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-format", "ConnectBlock(): Contract execution uses unknown version format");
+                    if(v.rootVM != 0){
+                        nonZeroVersion=true;
+                    }else{
+                        if(nonZeroVersion){
+                            //If an output is version 0, then do not allow any other versions in the same tx
+                            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-mixed-zero-versions", "ConnectBlock(): Contract tx has mixed version 0 and non-0 VM executions");
+                        }
+                    }
+                    if(!(v.rootVM == 0 || v.rootVM == 1))
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-rootvm", "ConnectBlock(): Contract execution uses unknown root VM");
+                    if(v.vmVersion != 0)
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-vmversion", "ConnectBlock(): Contract execution uses unknown VM version");
+                    if(v.flagOptions != 0)
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-version-flags", "ConnectBlock(): Contract execution uses unknown flag options");
+
+                    //check gas limit is not less than minimum gas limit (unless it is a no-exec tx)
+                    if(qtx.gas() < MINIMUM_GAS_LIMIT && v.rootVM != 0)
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-too-little-gas", "ConnectBlock(): Contract execution has lower gas limit than allowed");
+
+                    if(qtx.gas() > UINT32_MAX)
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-too-much-gas", "ConnectBlock(): Contract execution can not specify greater gas limit than can fit in 32-bits");
+
+                    gasAllTxs += qtx.gas();
+                    if(gasAllTxs > dev::u256(blockGasLimit))
+                        return state.Invalid(BlockValidationResult::BLOCK_GAS_EXCEEDS_LIMIT, "bad-txns-gas-exceeds-blockgaslimit");
+
+                    //don't allow less than DGP set minimum gas price to prevent MPoS greedy mining/spammers
+                    if(v.rootVM!=0 && (uint64_t)qtx.gasPrice() < minGasPrice)
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-low-gas-price", "ConnectBlock(): Contract execution has lower gas price than allowed");
                 }
 
-                pstorageresult->addResult(uintToh256(tx.GetHash()), tri);
-            }
+                if(!nonZeroVersion){
+                    //if tx is 0 version, then the tx must already have been added by a previous contract execution
+                    if(!tx.HasOpSpend()){
+                        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-improper-version-0", "ConnectBlock(): Version 0 contract executions are not allowed unless created by the AAL");
+                    }
+                }
 
-            blockGasUsed += bcer.usedGas;
-            if(blockGasUsed > blockGasLimit){
-                return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-blk-gaslimit", "ConnectBlock(): Block exceeds gas limit");
-            }
-            for(CTxOut refundVout : bcer.refundOutputs){
-                gasRefunds += refundVout.nValue;
-            }
-            checkVouts.insert(checkVouts.end(), bcer.refundOutputs.begin(), bcer.refundOutputs.end());
-            for(CTransaction& t : bcer.valueTransfers){
-                checkBlock.vtx.push_back(MakeTransactionRef(std::move(t)));
-            }
-            if(fRecordLogOpcodes && !fJustCheck){
-                writeVMlog(resultExec, m_chain, tx, block);
-            }
+                if(!exec.performByteCode()){
+                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-tx-unknown-error", "ConnectBlock(): Unknown error during contract execution");
+                }
 
-            for(ResultExecute& re: resultExec){
-                if(re.execRes.newAddress != dev::Address() && !fJustCheck)
-                    dev::g_logPost(std::string("Address : " + re.execRes.newAddress.hex()), NULL);
+                std::vector<ResultExecute> resultExec(exec.getResult());
+                ByteCodeExecResult bcer;
+                if(!exec.processingResults(bcer)){
+                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-vm-exec-processing", "ConnectBlock(): Error processing VM execution results");
+                }
+
+                std::vector<TransactionReceiptInfo> tri;
+                if (fLogEvents && !fJustCheck)
+                {
+                    uint64_t countCumulativeGasUsed = blockGasUsed;
+                    for(size_t k = 0; k < resultConvertQtumTX.first.size(); k ++){
+                        for(auto& log : resultExec[k].txRec.log()) {
+                            if(!heightIndexes.count(log.address)){
+                                heightIndexes[log.address].first = CHeightTxIndexKey(pindex->nHeight, log.address);
+                            }
+                            heightIndexes[log.address].second.push_back(tx.GetHash());
+                        }
+                        uint64_t gasUsed = uint64_t(resultExec[k].execRes.gasUsed);
+                        countCumulativeGasUsed += gasUsed;
+                        tri.push_back(TransactionReceiptInfo{
+                            block.GetHash(),
+                            uint32_t(pindex->nHeight),
+                            tx.GetHash(),
+                            uint32_t(i),
+                            resultConvertQtumTX.first[k].from(),
+                            resultConvertQtumTX.first[k].to(),
+                            countCumulativeGasUsed,
+                            gasUsed,
+                            resultExec[k].execRes.newAddress,
+                            resultExec[k].txRec.log(),
+                            resultExec[k].execRes.excepted,
+                            exceptedMessage(resultExec[k].execRes.excepted, resultExec[k].execRes.output),
+                            resultConvertQtumTX.first[k].getNVout(),
+                            resultExec[k].txRec.bloom(),
+                            resultExec[k].txRec.stateRoot(),
+                            resultExec[k].txRec.utxoRoot(),
+                        });
+                    }
+
+                    pstorageresult->addResult(uintToh256(tx.GetHash()), tri);
+                }
+
+                blockGasUsed += bcer.usedGas;
+                if(blockGasUsed > blockGasLimit){
+                    return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-blk-gaslimit", "ConnectBlock(): Block exceeds gas limit");
+                }
+                for(CTxOut refundVout : bcer.refundOutputs){
+                    gasRefunds += refundVout.nValue;
+                }
+                checkVouts.insert(checkVouts.end(), bcer.refundOutputs.begin(), bcer.refundOutputs.end());
+                for(CTransaction& t : bcer.valueTransfers){
+                    checkBlock.vtx.push_back(MakeTransactionRef(std::move(t)));
+                }
+                if(fRecordLogOpcodes && !fJustCheck){
+                    writeVMlog(resultExec, m_chain, tx, block);
+                }
+
+                for(ResultExecute& re: resultExec){
+                    if(re.execRes.newAddress != dev::Address() && !fJustCheck)
+                        dev::g_logPost(std::string("Address : " + re.execRes.newAddress.hex()), NULL);
+                }
             }
         }
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -3326,78 +3323,80 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     LogPrint(BCLog::BENCH, "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs (%.2fms/blk)]\n", nInputs - 1, MILLI * (nTime4 - nTime2), nInputs <= 1 ? 0 : MILLI * (nTime4 - nTime2) / (nInputs-1), nTimeVerify * MICRO, nTimeVerify * MILLI / nBlocksTotal);
 
 ////////////////////////////////////////////////////////////////// // qtum
-    if(pindex->nHeight == m_params.GetConsensus().nOfflineStakeHeight){
-        globalState->deployDelegationsContract();
-    }
-    checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
-    checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
-    checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
+    if(pindex->nHeight > m_params.GetConsensus().nSmartActivationBlock){
+        if(pindex->nHeight == m_params.GetConsensus().nOfflineStakeHeight){
+            globalState->deployDelegationsContract();
+        }
+        checkBlock.hashMerkleRoot = BlockMerkleRoot(checkBlock);
+        checkBlock.hashStateRoot = h256Touint(globalState->rootHash());
+        checkBlock.hashUTXORoot = h256Touint(globalState->rootHashUTXO());
 
     //If this error happens, it probably means that something with AAL created transactions didn't match up to what is expected
-    if((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
-    {
-        LogPrintf("Actual block data does not match block expected by AAL\n");
-        //Something went wrong with AAL, compare different elements and determine what the problem is
-        if(checkBlock.hashMerkleRoot != block.hashMerkleRoot){
-            //there is a mismatched tx, so go through and determine which txs
-            if(block.vtx.size() > checkBlock.vtx.size()){
-                LogPrintf("Unexpected AAL transactions in block. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
-                for(size_t i=0;i<block.vtx.size();i++){
-                    if(i > checkBlock.vtx.size()-1){
-                        LogPrintf("Unexpected transaction: %s\n", block.vtx[i]->ToString());
-                    }else {
+        if((checkBlock.GetHash() != block.GetHash()) && !fJustCheck)
+        {
+            LogPrintf("Actual block data does not match block expected by AAL\n");
+            //Something went wrong with AAL, compare different elements and determine what the problem is
+            if(checkBlock.hashMerkleRoot != block.hashMerkleRoot){
+                //there is a mismatched tx, so go through and determine which txs
+                if(block.vtx.size() > checkBlock.vtx.size()){
+                    LogPrintf("Unexpected AAL transactions in block. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
+                    for(size_t i=0;i<block.vtx.size();i++){
+                        if(i > checkBlock.vtx.size()-1){
+                            LogPrintf("Unexpected transaction: %s\n", block.vtx[i]->ToString());
+                        }else {
+                            if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
+                                LogPrintf("Mismatched transaction at entry %i\n", i);
+                                LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
+                                LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
+                            }
+                        }
+                    }
+                }else if(block.vtx.size() < checkBlock.vtx.size()){
+                    LogPrintf("Actual block is missing AAL transactions. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
+                    for(size_t i=0;i<checkBlock.vtx.size();i++){
+                        if(i > block.vtx.size()-1){
+                            LogPrintf("Missing transaction: %s\n", checkBlock.vtx[i]->ToString());
+                        }else {
+                            if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
+                                LogPrintf("Mismatched transaction at entry %i\n", i);
+                                LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
+                                LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
+                            }
+                        }
+                    }
+                }else{
+                    //count is correct, but a tx is wrong
+                    for(size_t i=0;i<checkBlock.vtx.size();i++){
                         if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
                             LogPrintf("Mismatched transaction at entry %i\n", i);
                             LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
                             LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
                         }
-                    }
-                }
-            }else if(block.vtx.size() < checkBlock.vtx.size()){
-                LogPrintf("Actual block is missing AAL transactions. Actual txs: %i, expected txs: %i\n", block.vtx.size(), checkBlock.vtx.size());
-                for(size_t i=0;i<checkBlock.vtx.size();i++){
-                    if(i > block.vtx.size()-1){
-                        LogPrintf("Missing transaction: %s\n", checkBlock.vtx[i]->ToString());
-                    }else {
-                        if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
-                            LogPrintf("Mismatched transaction at entry %i\n", i);
-                            LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
-                            LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
-                        }
-                    }
-                }
-            }else{
-                //count is correct, but a tx is wrong
-                for(size_t i=0;i<checkBlock.vtx.size();i++){
-                    if (block.vtx[i]->GetHash() != checkBlock.vtx[i]->GetHash()) {
-                        LogPrintf("Mismatched transaction at entry %i\n", i);
-                        LogPrintf("Actual: %s\n", block.vtx[i]->ToString());
-                        LogPrintf("Expected: %s\n", checkBlock.vtx[i]->ToString());
                     }
                 }
             }
-        }
-        if(checkBlock.hashUTXORoot != block.hashUTXORoot){
-            LogPrintf("Actual block data does not match hashUTXORoot expected by AAL block\n");
-        }
-        if(checkBlock.hashStateRoot != block.hashStateRoot){
-            LogPrintf("Actual block data does not match hashStateRoot expected by AAL block\n");
+            if(checkBlock.hashUTXORoot != block.hashUTXORoot){
+                LogPrintf("Actual block data does not match hashUTXORoot expected by AAL block\n");
+            }
+            if(checkBlock.hashStateRoot != block.hashStateRoot){
+                LogPrintf("Actual block data does not match hashStateRoot expected by AAL block\n");
+            }
+
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "incorrect-transactions-or-hashes-block", "ConnectBlock(): Incorrect AAL transactions or hashes (hashStateRoot, hashUTXORoot)");
         }
 
-        return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "incorrect-transactions-or-hashes-block", "ConnectBlock(): Incorrect AAL transactions or hashes (hashStateRoot, hashUTXORoot)");
-    }
-
-    if (fJustCheck)
-    {
-        dev::h256 prevHashStateRoot(dev::sha3(dev::rlp("")));
-        dev::h256 prevHashUTXORoot(dev::sha3(dev::rlp("")));
-        if(pindex->pprev->hashStateRoot != uint256() && pindex->pprev->hashUTXORoot != uint256()){
-            prevHashStateRoot = uintToh256(pindex->pprev->hashStateRoot);
-            prevHashUTXORoot = uintToh256(pindex->pprev->hashUTXORoot);
+        if (fJustCheck)
+        {
+            dev::h256 prevHashStateRoot(dev::sha3(dev::rlp("")));
+            dev::h256 prevHashUTXORoot(dev::sha3(dev::rlp("")));
+            if(pindex->pprev->hashStateRoot != uint256() && pindex->pprev->hashUTXORoot != uint256()){
+                prevHashStateRoot = uintToh256(pindex->pprev->hashStateRoot);
+                prevHashUTXORoot = uintToh256(pindex->pprev->hashUTXORoot);
+            }
+            globalState->setRoot(prevHashStateRoot);
+            globalState->setRootUTXO(prevHashUTXORoot);
+            return true;
         }
-        globalState->setRoot(prevHashStateRoot);
-        globalState->setRootUTXO(prevHashUTXORoot);
-        return true;
     }
 //////////////////////////////////////////////////////////////////
 
