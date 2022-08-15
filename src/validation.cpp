@@ -5709,7 +5709,7 @@ bool TestBlockValidity(BlockValidationState& state,
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, state.ToString());
 
     if (!chainstate.ConnectBlock(block, state, &indexDummy, viewNew, true)) {
-        if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+        if(block.nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
             dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
             dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
             globalState->setRoot(oldHashStateRoot); // qtum
@@ -6165,12 +6165,14 @@ bool CVerifyDB::VerifyDB(
             if (!ReadBlockFromDisk(block, pindex, chainparams.GetConsensus()))
                 return error("VerifyDB(): *** ReadBlockFromDisk failed at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
 
-            dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
-            dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
 
             if (!chainstate.ConnectBlock(block, state, pindex, coins)) {
-                globalState->setRoot(oldHashStateRoot); // qtum
-                globalState->setRootUTXO(oldHashUTXORoot); // qtum
+                if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+                    dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
+                    dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
+                    globalState->setRoot(oldHashStateRoot); // qtum
+                    globalState->setRootUTXO(oldHashUTXORoot); // qtum
+                }
                 pstorageresult->clearCacheResult();
                 return error("VerifyDB(): *** found unconnectable block at %d, hash=%s (%s)", pindex->nHeight, pindex->GetBlockHash().ToString(), state.ToString());
             }
