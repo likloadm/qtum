@@ -110,6 +110,7 @@ static const bool DEFAULT_REST_ENABLE = false;
 
 static const char* DEFAULT_ASMAP_FILENAME="ip_asn.map";
 
+static const uint32_t nSmartActivationBlock = 1000;
 /**
  * The PID file facilities.
  */
@@ -282,7 +283,7 @@ void Shutdown(NodeContext& node)
         pblocktree.reset();
         pstorageresult.reset();
         CChain& active_chain = node.chainman->ActiveChain();
-        if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
+        if (active_chain.Height() >= nSmartActivationBlock){
             globalState.reset();
             globalSealEngine.reset();
         }
