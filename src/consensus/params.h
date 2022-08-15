@@ -97,6 +97,8 @@ struct Params {
     int QIP7Height;
     /** Block height at which QIP9 becomes active */
     int QIP9Height;
+
+    int nSmartActivationBlock;
     /** Block height at which Offline Staking becomes active */
     int nOfflineStakeHeight;
     /** Block height at which Reduce Block Time becomes active */

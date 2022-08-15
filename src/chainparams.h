@@ -97,6 +97,8 @@ public:
     }
 
     const CBlock& GenesisBlock() const { return genesis; }
+    const uint256 HashStateRoot() const { return hashStateRoot; }
+    const uint256 HashUTXORoot() const { return hashUTXORoot; }
     /** Default value for -checkmempool and -checkblockindex argument */
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Policy: Filter transactions that do not match well-defined patterns */
@@ -157,6 +159,8 @@ protected:
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
     std::string bech32_hrp;
     std::string strNetworkID;
+    uint256 hashStateRoot;
+    uint256 hashUTXORoot;
     CBlock genesis;
     CBlock devnetGenesis;
     std::vector<uint8_t> vFixedSeeds;
