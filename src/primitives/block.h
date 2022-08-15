@@ -18,7 +18,7 @@
  * of the block.
  */
 
-static const uint32_t nSmartActivationBlock = 0;
+static const uint32_t nSmartActivationBlock = -1000;
 
 class CBlockHeader
 {
