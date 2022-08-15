@@ -2986,6 +2986,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
 
     CBlock checkBlock(block.GetBlockHeader());
+    std::vector<CTxOut> checkVouts;
 
     ///////////////////////////////////////////////////////// // qtum
     std::vector<std::pair<CAddressIndexKey, CAmount> > addressIndex;
