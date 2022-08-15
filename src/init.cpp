@@ -1712,7 +1712,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 }
 
 
-                if (active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock){
+                if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
                     dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
                     /////////////////////////////////////////////////////////// qtum
                     if((args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) || (!args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) ||

@@ -3123,7 +3123,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
         if(!CheckOpSender(tx, m_params, pindex->nHeight)){
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-invalid-sender");
         }
-        if(block.nHeight > m_params.GetConsensus().nSmartActivationBlock){
+        if(block.nHeight >= m_params.GetConsensus().nSmartActivationBlock){
             if(!tx.HasOpSpend()){
                 checkBlock.vtx.push_back(block.vtx[i]);
             }
@@ -3326,7 +3326,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     LogPrint(BCLog::BENCH, "    - Verify %u txins: %.2fms (%.3fms/txin) [%.2fs (%.2fms/blk)]\n", nInputs - 1, MILLI * (nTime4 - nTime2), nInputs <= 1 ? 0 : MILLI * (nTime4 - nTime2) / (nInputs-1), nTimeVerify * MICRO, nTimeVerify * MILLI / nBlocksTotal);
 
 ////////////////////////////////////////////////////////////////// // qtum
-    if(pindex->nHeight > m_params.GetConsensus().nSmartActivationBlock){
+    if(pindex->nHeight >= m_params.GetConsensus().nSmartActivationBlock){
         if(pindex->nHeight == m_params.GetConsensus().nOfflineStakeHeight){
             globalState->deployDelegationsContract();
         }
@@ -6167,7 +6167,7 @@ bool CVerifyDB::VerifyDB(
 
 
             if (!chainstate.ConnectBlock(block, state, pindex, coins)) {
-                if(pindex->nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+                if(pindex->nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
                     dev::h256 oldHashStateRoot(globalState->rootHash()); // qtum
                     dev::h256 oldHashUTXORoot(globalState->rootHashUTXO()); // qtum
                     globalState->setRoot(oldHashStateRoot); // qtum

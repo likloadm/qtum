@@ -277,7 +277,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     std::cout<<"FUCK ALL THIS SHIT 8 "<<std::endl;
 
 
-    if(nHeight > chainparams.GetConsensus().nSmartActivationBlock){
+    if(nHeight >= chainparams.GetConsensus().nSmartActivationBlock){
         //////////////////////////////////////////////////////// qtum
         QtumDGP qtumDGP(globalState.get(), m_chainstate, fGettingValuesDGP);
         globalSealEngine->setQtumSchedule(qtumDGP.getGasSchedule(nHeight));
