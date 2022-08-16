@@ -415,18 +415,18 @@ public:
         READWRITE(obj.nBits);
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
-        std::cout << "CDiskBlockIndex::obj.nHeight: " << obj.nHeight<< std::endl;
+        std::cout << "CDiskBlockIndex::obj.nHeight: " << nHeight<< std::endl;
         if (nSmartActivationBlock <= nHeight){
             READWRITE(obj.hashStateRoot); // qtum
             READWRITE(obj.hashUTXORoot); // qtum
         }
             READWRITE(obj.nStakeModifier);
 
-        if (nSmartActivationBlock <= obj.nHeight){
+        if (nSmartActivationBlock <= nHeight){
             READWRITE(obj.prevoutStake);
         }
             READWRITE(obj.hashProof);
-        if (nSmartActivationBlock <= obj.nHeight){
+        if (nSmartActivationBlock <= nHeight){
             READWRITE(obj.vchBlockSigDlgt); // qtum
         }
     }
