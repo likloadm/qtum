@@ -57,12 +57,12 @@ public:
         READWRITE(obj.nHeight);
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
-//        if (nSmartActivationBlock <= obj.nTime){
+        if (nSmartActivationBlock <= obj.nHeight){
             READWRITE(obj.hashStateRoot);
             READWRITE(obj.hashUTXORoot);
             READWRITE(obj.prevoutStake);
             READWRITE(obj.vchBlockSigDlgt);
-//        }
+        }
     }
 
     void SetNull()
