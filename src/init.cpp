@@ -1648,7 +1648,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
         do {
             const int64_t load_block_index_start_time = GetTimeMillis();
-            dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
+
             try {
                 LOCK(cs_main);
                 chainman.Reset();
@@ -1714,6 +1714,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
 
                 if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
+                    dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
                     /////////////////////////////////////////////////////////// qtum
                     if((args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) || (!args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) ||
                       (!args.IsArgSet("-dgpstorage") && !args.IsArgSet("-dgpevm"))){
@@ -1823,9 +1824,10 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 LOCK(cs_main);
                 CChain& active_chain = chainman.ActiveChain();
                 if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
-                    if(active_chain.Tip() != nullptr){
-                    globalState->setRoot(uintToh256(active_chain.Tip()->hashStateRoot));
-                    globalState->setRootUTXO(uintToh256(active_chain.Tip()->hashUTXORoot));
+                    dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
+                    if(active_chain.Height() != chainparams.GetConsensus().nSmartActivationBlock){
+                        globalState->setRoot(uintToh256(active_chain.Tip()->hashStateRoot));
+                        globalState->setRootUTXO(uintToh256(active_chain.Tip()->hashUTXORoot));
                     } else {
                         globalState->setRoot(dev::sha3(dev::rlp("")));
                         globalState->setRootUTXO(uintToh256(chainparams.HashUTXORoot()));
