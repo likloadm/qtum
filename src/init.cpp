@@ -1713,6 +1713,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 }
 
 
+
                 if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
                     /////////////////////////////////////////////////////////// qtum
                     if((args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) || (!args.IsArgSet("-dgpstorage") && args.IsArgSet("-dgpevm")) ||
