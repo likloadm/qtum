@@ -41,6 +41,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
     genesis.nNonce   = nNonce;
     genesis.nNonce64  = nNonce64;
     genesis.mix_hash  = mix_hash;
+    genesis.nHeight = 0;
     genesis.nVersion = nVersion;
     genesis.vtx.push_back(MakeTransactionRef(std::move(txNew)));
     genesis.hashPrevBlock.SetNull();
