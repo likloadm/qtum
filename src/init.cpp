@@ -1825,7 +1825,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 CChain& active_chain = chainman.ActiveChain();
                 if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
                     dev::eth::ChainParams cp(chainparams.EVMGenesisInfo());
-                    if(active_chain.Height() != chainparams.GetConsensus().nSmartActivationBlock){
+                    if(active_chain.Tip() != nullptr){
                         globalState->setRoot(uintToh256(active_chain.Tip()->hashStateRoot));
                         globalState->setRootUTXO(uintToh256(active_chain.Tip()->hashUTXORoot));
                     } else {
