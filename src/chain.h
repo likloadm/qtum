@@ -416,7 +416,7 @@ public:
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
         std::cout << "CDiskBlockIndex::obj.nHeight: " << obj.nHeight<< std::endl;
-        if (nSmartActivationBlock <= obj.nHeight){
+        if (nSmartActivationBlock <= nHeight){
             READWRITE(obj.hashStateRoot); // qtum
             READWRITE(obj.hashUTXORoot); // qtum
         }
