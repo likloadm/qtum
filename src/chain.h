@@ -415,7 +415,7 @@ public:
         READWRITE(obj.nBits);
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
-        if (nSmartActivationBlock =< obj.nHeight){
+        if (nSmartActivationBlock <= obj.nHeight){
             READWRITE(obj.hashStateRoot); // qtum
             READWRITE(obj.hashUTXORoot); // qtum
             READWRITE(obj.nStakeModifier);
