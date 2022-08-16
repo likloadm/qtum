@@ -1823,18 +1823,16 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
             {
                 LOCK(cs_main);
                 CChain& active_chain = chainman.ActiveChain();
-                if (active_chain.Height() >= chainparams.GetConsensus().nSmartActivationBlock){
-                    if(active_chain.Tip() != nullptr){
+                if(active_chain.Height() > chainparams.GetConsensus().nSmartActivationBlock){
                     globalState->setRoot(uintToh256(active_chain.Tip()->hashStateRoot));
                     globalState->setRootUTXO(uintToh256(active_chain.Tip()->hashUTXORoot));
-                    } else {
-                        globalState->setRoot(dev::sha3(dev::rlp("")));
-                        globalState->setRootUTXO(uintToh256(chainparams.HashUTXORoot()));
-                        globalState->populateFrom(cp.genesisState);
-                    }
-                    globalState->db().commit();
-                    globalState->dbUtxo().commit();
+                } else {
+                    globalState->setRoot(uintToh256(chainparams.HashStateRoot()));
+                    globalState->setRootUTXO(uintToh256(chainparams.HashUTXORoot()));
+                    globalState->populateFrom(cp.genesisState);
                 }
+                globalState->db().commit();
+                globalState->dbUtxo().commit();
             }
             ///////////////////////////////////////////////////////////////
 
