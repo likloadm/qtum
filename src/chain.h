@@ -420,9 +420,11 @@ public:
             READWRITE(obj.hashUTXORoot); // qtum
             READWRITE(obj.nStakeModifier);
             READWRITE(obj.prevoutStake);
+        }
+            READWRITE(obj.hashProof);
+        if (nSmartActivationBlock <= obj.nHeight){
             READWRITE(obj.vchBlockSigDlgt); // qtum
         }
-        READWRITE(obj.hashProof);
     }
 
     uint256 GetBlockHash() const
