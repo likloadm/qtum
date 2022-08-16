@@ -57,6 +57,7 @@ public:
         READWRITE(obj.nHeight);
         READWRITE(obj.nNonce64);
         READWRITE(obj.mix_hash);
+        std::cout << "CBlockHeader::obj.nHeight: " << obj.nHeight<< std::endl;
         if (nSmartActivationBlock <= obj.nHeight){
             READWRITE(obj.hashStateRoot);
             READWRITE(obj.hashUTXORoot);
