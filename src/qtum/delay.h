@@ -5,6 +5,7 @@
 #include "uint256.h"
 #include "chain.h"
 #include "chainparams.h"
+#include <logging.h>
 #include "tinyformat.h"
 #include <boost/foreach.hpp>
 
