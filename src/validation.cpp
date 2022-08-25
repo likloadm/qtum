@@ -3755,6 +3755,7 @@ void CChainState::UpdateTip(const CBlockIndex* pindexNew)
             }
         }
     }
+    double syncProgress = GuessVerificationProgress(m_params.TxData(), pindexNew);
     if(fIsStartupSyncing && std::abs(1.0 - syncProgress) < 0.000001) {
         LogPrintf("Fully synchronized at block height %d\n", pindexNew->nHeight);
         fIsStartupSyncing = false;
@@ -3764,7 +3765,7 @@ void CChainState::UpdateTip(const CBlockIndex* pindexNew)
       pindexNew->GetBlockHash().ToString(), pindexNew->nHeight, pindexNew->nVersion,
       log(pindexNew->nChainWork.getdouble())/log(2.0), (unsigned long)pindexNew->nChainTx,
       FormatISO8601DateTime(pindexNew->GetBlockTime()),
-      GuessVerificationProgress(m_params.TxData(), pindexNew), this->CoinsTip().DynamicMemoryUsage() * (1.0 / (1<<20)), this->CoinsTip().GetCacheSize(),
+      syncProgress, this->CoinsTip().DynamicMemoryUsage() * (1.0 / (1<<20)), this->CoinsTip().GetCacheSize(),
       !warning_messages.empty() ? strprintf(" warning='%s'", warning_messages.original) : "");
 }
 
@@ -4487,7 +4488,7 @@ CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block)
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     pindexNew->nStakeModifier = ComputeStakeModifier(pindexNew->pprev, block.IsProofOfWork() ? hash : block.prevoutStake.hash);
     if (pindexNew->pprev){
-        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), ActiveChain.Height(), fIsStartupSyncing);
+        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), ActiveChain().Height(), fIsStartupSyncing);
     } else {
         pindexNew->nChainDelay = 0 ;
     }
