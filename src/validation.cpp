@@ -28,6 +28,7 @@
 #include <policy/policy.h>
 #include <policy/settings.h>
 #include <pow.h>
+#include <qtum/delay.h>
 #include <pos.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
@@ -112,6 +113,10 @@ std::set<std::pair<COutPoint, unsigned int>> setStakeSeen;
  //////////////////////////////
 
 bool CBlockIndexWorkComparator::operator()(const CBlockIndex *pa, const CBlockIndex *pb) const {
+    // First sort by total delay in chain.
+    if (pa->nChainDelay < pb->nChainDelay) return false;
+    if (pa->nChainDelay > pb->nChainDelay) return true;
+
     // First sort by most total work, ...
     if (pa->nChainWork > pb->nChainWork) return false;
     if (pa->nChainWork < pb->nChainWork) return true;
@@ -4477,8 +4482,16 @@ CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block)
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     pindexNew->nStakeModifier = ComputeStakeModifier(pindexNew->pprev, block.IsProofOfWork() ? hash : block.prevoutStake.hash);
+    if (pindexNew->pprev){
+        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), chainActive.Height(), fIsStartupSyncing);
+    } else {
+        pindexNew->nChainDelay = 0 ;
+    }
+    if(pindexNew->nChainDelay != 0) {
+        LogPrintf("%s: Block belong to a chain under punishment Delay VAL: %i BLOCKHEIGHT: %d\n",__func__, pindexNew->nChainDelay, pindexNew->nHeight);
+    }
     pindexNew->RaiseValidity(BLOCK_VALID_TREE);
-    if (pindexBestHeader == nullptr || pindexBestHeader->nChainWork < pindexNew->nChainWork)
+    if (pindexBestHeader == nullptr || pindexBestHeader->nChainWork < pindexNew->nChainWork && pindexNew->nChainDelay==0)
         pindexBestHeader = pindexNew;
 
     setDirtyBlockIndex.insert(pindexNew);
@@ -5905,6 +5918,7 @@ bool BlockManager::LoadBlockIndex(
         if (ShutdownRequested()) return false;
         CBlockIndex* pindex = item.second;
         pindex->nChainWork = (pindex->pprev ? pindex->pprev->nChainWork : 0) + GetBlockProof(*pindex);
+        pindex->nChainDelay = 0 ;
         pindex->nTimeMax = (pindex->pprev ? std::max(pindex->pprev->nTimeMax, pindex->nTime) : pindex->nTime);
         // We can link the chain of blocks for which we've received transactions at some point.
         // Pruned nodes may have deleted the block.
