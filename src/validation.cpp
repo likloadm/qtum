@@ -109,6 +109,7 @@ std::shared_ptr<dev::eth::SealEngineFace> globalSealEngine;
 bool fRecordLogOpcodes = false;
 bool fIsVMlogFile = false;
 bool fGettingValuesDGP = false;
+bool fIsStartupSyncing = true;
 std::set<std::pair<COutPoint, unsigned int>> setStakeSeen;
  //////////////////////////////
 
@@ -3754,7 +3755,10 @@ void CChainState::UpdateTip(const CBlockIndex* pindexNew)
             }
         }
     }
-
+    if(fIsStartupSyncing && std::abs(1.0 - syncProgress) < 0.000001) {
+        LogPrintf("Fully synchronized at block height %d\n", pindexNew->nHeight);
+        fIsStartupSyncing = false;
+    }
 
     LogPrintf("%s: new best=%s height=%d version=0x%08x log2_work=%f tx=%lu date='%s' progress=%f cache=%.1fMiB(%utxo)%s\n", __func__,
       pindexNew->GetBlockHash().ToString(), pindexNew->nHeight, pindexNew->nVersion,
@@ -4483,7 +4487,7 @@ CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block)
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     pindexNew->nStakeModifier = ComputeStakeModifier(pindexNew->pprev, block.IsProofOfWork() ? hash : block.prevoutStake.hash);
     if (pindexNew->pprev){
-        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), chainActive.Height(), fIsStartupSyncing);
+        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), ActiveChain.Height(), fIsStartupSyncing);
     } else {
         pindexNew->nChainDelay = 0 ;
     }
