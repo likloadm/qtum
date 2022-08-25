@@ -1,4 +1,4 @@
-#include "zen/delay.h"
+#include "qtum/delay.h"
 
 int GetBlockDelay(const CBlockIndex& newBlock, const CBlockIndex& prevBlock, const int activeChainHeight, const bool isStartupSyncing)
 {
@@ -22,7 +22,7 @@ int GetBlockDelay(const CBlockIndex& newBlock, const CBlockIndex& prevBlock, con
         	LogPrintf("Decreasing penalty to chain (activeChainHeight: %d, newBlockHeight: %d, prevBlockChainDelay: %d)!\n", activeChainHeight, newBlock.nHeight, prevBlock.nChainDelay);
         	// -1 to decrease the penalty afterwards.
             return -1;
-        } 
+        }
     // no penalty yet, or penalty already resolved.
     } else {
         // Introduce penalty in case we receive a historic block.
