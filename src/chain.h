@@ -156,6 +156,8 @@ public:
     //! Which # file this block is stored in (blk?????.dat)
     int nFile{0};
 
+    int nChainDelay;
+
     //! Byte offset within blk?????.dat where this block's data is stored
     unsigned int nDataPos{0};
 
