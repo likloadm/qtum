@@ -3,7 +3,6 @@
 #include "primitives/block.h"
 #include "streams.h"
 #include "uint256.h"
-#include "util.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "tinyformat.h"
