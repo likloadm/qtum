@@ -1840,10 +1840,6 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     int nBlockEstimate = 0;
 
 
-    if (!pnode->IsInboundConn()) {
-        PushNodeVersion(*pnode, GetTime());
-    }
-
     int nodeHeight = -1;
     if (m_connman->GetLocalServices() & NODE_NETWORK) {
         m_connman->ForEachNode([&vInv, &nodeHeight, &nBlockEstimate](CNode* pnode) {
