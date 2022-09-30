@@ -849,6 +849,7 @@ libbitcoin_common_a_SOURCES = \
   sign.h \
   symmetric.h \
   api.h \
+  ariel/delay.cpp \
   $(BITCOIN_CORE_H)
 
 #only added json_spirit so that `make dist` works properly
