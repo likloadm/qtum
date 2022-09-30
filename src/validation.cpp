@@ -5715,7 +5715,7 @@ bool ChainstateManager::ProcessNewBlock(const CChainParams& chainparams, const s
 
     if (!postponeRelay)
     {
-        GetMainSignals().RelayAlternativeChain(state, block, &sForkTips)
+        GetMainSignals().RelayAlternativeChain(state, block, &sForkTips);
     }
     else
     {
