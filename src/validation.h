@@ -147,6 +147,11 @@ static const CAmount DEFAULT_STAKING_MIN_UTXO_VALUE = 100 * COIN;
 //! -forceinitialblocksdownloadmode default
 static const bool DEFAULT_FORCE_INITIAL_BLOCKS_DOWNLOAD_MODE = false;
 
+struct CBlockIndexRealWorkComparator
+{
+    bool operator()(const CBlockIndex *pa, const CBlockIndex *pb) const;
+};
+
 struct CompareBlocksByHeight
 {
     bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
