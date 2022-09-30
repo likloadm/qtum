@@ -38,7 +38,7 @@ namespace Checkpoints {
         return nullptr;
     }
 
-    // Automatically select a suitable sync-checkpoint 
+    // Automatically select a suitable sync-checkpoint
     const CBlockIndex* AutoSelectSyncCheckpoint()
     {
         const CBlockIndex *pindexBest = ::ChainActive().Tip();
@@ -60,5 +60,14 @@ namespace Checkpoints {
         if(nHeight && nHeight <= pindexSync->nHeight)
             return false;
         return true;
+    }
+    int GetTotalBlocksEstimate(const CCheckpointData& data)
+    {
+        const MapCheckpoints& checkpoints = data.mapCheckpoints;
+
+        if (checkpoints.empty())
+            return 0;
+
+        return checkpoints.rbegin()->first;
     }
 } // namespace Checkpoints

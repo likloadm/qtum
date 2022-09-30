@@ -1838,8 +1838,6 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
 
     // 5. push inv list up to the alternative tips
     int nBlockEstimate = 0;
-    if (fCheckpointsEnabled)
-        nBlockEstimate = Checkpoints::GetTotalBlocksEstimate(chainParams.Checkpoints());
 
     int nodeHeight = -1;
     if (g_connman->GetLocalServices() & NODE_NETWORK) {
