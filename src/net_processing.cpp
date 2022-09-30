@@ -1839,12 +1839,19 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     // 5. push inv list up to the alternative tips
     int nBlockEstimate = 0;
 
+
+    if (!pnode->IsInboundConn()) {
+        PushNodeVersion(*pnode, GetTime());
+    }
+
     int nodeHeight = -1;
     if (m_connman->GetLocalServices() & NODE_NETWORK) {
         m_connman->ForEachNode([&vInv, &nodeHeight, &nBlockEstimate](CNode* pnode) {
-            if (pnode->m_starting_height != -1)
+            NodeId nodeid = pnode->GetId();
+            PeerRef peer = std::make_shared<Peer>(nodeid, /* addr_relay = */ !pnode->IsBlockOnlyConn());
+            if (peer->m_starting_height != -1)
             {
-                nodeHeight = (pnode->m_starting_height - 2000);
+                nodeHeight = (peer->m_starting_height - 2000);
             }
             else
             {
