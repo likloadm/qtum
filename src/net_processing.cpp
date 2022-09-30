@@ -1785,7 +1785,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     }
 
     CBlockIndex* pindex = NULL;
-    BlockMap::iterator mi = m_block_index.find(hashAlternativeTip);
+    BlockMap::iterator mi = m_chainman.m_blockman.m_block_index.find(hashAlternativeTip);
     if (mi != mapBlockIndex.end())
     {
         pindex = (*mi).second;
