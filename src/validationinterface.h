@@ -24,6 +24,8 @@ class CScheduler;
 enum class MemPoolRemovalReason;
 
 
+struct CompareBlocksByHeight;
+
 typedef std::set<const CBlockIndex*, CompareBlocksByHeight> BlockSet;
 /** Register subscriber */
 void RegisterValidationInterface(CValidationInterface* callbacks);
