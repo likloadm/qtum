@@ -1778,7 +1778,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     LogPrint(BCLog::NET, "%s():%d - Entering with hash[%s]\n", __func__, __LINE__, hashAlternativeTip.ToString());
 
     // 1. check this is the best chain tip, in this case exit
-    if (chainActive.Tip()->GetBlockHash() == hashAlternativeTip)
+    if (m_chainman.ActiveChain().Tip()->GetBlockHash() == hashAlternativeTip)
     {
         LogPrint(BCLog::NET, "%s():%d - Exiting: already best tip\n", __func__, __LINE__);
         return true;
@@ -1798,7 +1798,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     }
 
     // 2. check this block is a fork from best chain, otherwise exit
-    if (chainActive.Contains(pindex))
+    if (m_chainman.ActiveChain().Contains(pindex))
     {
         LogPrint(BCLog::NET, "%s():%d - Exiting: it belongs to main chain\n", __func__, __LINE__);
         return true;
