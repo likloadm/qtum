@@ -169,6 +169,8 @@ protected:
      * callback was generated (not necessarily now)
      */
     virtual void BlockChecked(const CBlock&, const BlockValidationState&) {}
+
+    virtual bool RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips) {}
     /**
      * Notifies listeners that a block which builds directly on our current tip
      * has been received and connected to the headers tree, though not validated yet */
