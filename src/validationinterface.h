@@ -210,7 +210,7 @@ public:
     void BlockDisconnected(const std::shared_ptr<const CBlock> &, const CBlockIndex* pindex);
     void ChainStateFlushed(const CBlockLocator &);
     void BlockChecked(const CBlock&, const BlockValidationState&);
-    bool RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips)
+    bool RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips);
     void NewPoWValidBlock(const CBlockIndex *, const std::shared_ptr<const CBlock>&);
 };
 
