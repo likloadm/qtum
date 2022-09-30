@@ -4034,11 +4034,11 @@ void CChainState::PruneBlockIndexCandidates() {
  *
  * @returns true unless a system error occurred
  */
-bool CChainState::ActivateBestChainStep(BlockValidationState& state, CBlockIndex* pindexMostWork, const std::shared_ptr<const CBlock>& pblock, bool& fInvalidFound, ConnectTrace& connectTrace)
+bool CChainState::ActivateBestChainStep(BlockValidationState& state, CBlockIndex* pindexMostWork, const std::shared_ptr<const CBlock>& pblock, bool& fInvalidFound, ConnectTrace& connectTrace, bool &postponeRelay)
 {
     AssertLockHeld(cs_main);
     if (m_mempool) AssertLockHeld(m_mempool->cs);
-
+    postponeRelay = false;
     const CBlockIndex* pindexOldTip = m_chain.Tip();
     const CBlockIndex* pindexFork = m_chain.FindFork(pindexMostWork);
 
@@ -4087,6 +4087,7 @@ bool CChainState::ActivateBestChainStep(BlockValidationState& state, CBlockIndex
                     }
                     state = BlockValidationState();
                     fInvalidFound = true;
+                    postponeRelay = true;
                     fContinue = false;
                     break;
                 } else {
@@ -4204,10 +4205,13 @@ bool CChainState::ActivateBestChain(BlockValidationState& state, std::shared_ptr
 
                 bool fInvalidFound = false;
                 std::shared_ptr<const CBlock> nullBlockPtr;
-                if (!ActivateBestChainStep(state, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace)) {
+                bool postponeRelayTmp = false;
+
+                if (!ActivateBestChainStep(state, pindexMostWork, pblock && pblock->GetHash() == pindexMostWork->GetBlockHash() ? pblock : nullBlockPtr, fInvalidFound, connectTrace, postponeRelayTmp)) {
                     // A system error occurred
                     return false;
                 }
+                postponeRelay |= postponeRelayTmp;
                 blocks_connected = true;
 
                 if (fInvalidFound) {
