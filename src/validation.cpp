@@ -6501,7 +6501,8 @@ void CChainState::LoadExternalBlockFile(FILE* fileIn, FlatFilePos* dbp)
                 // validating PoS proofs
                 {
                     BlockValidationState state;
-                    if (!ActivateBestChain(state, nullptr, nullptr)) {
+                    bool postponeRelay = false;
+                    if (!ActivateBestChain(state, nullptr, postponeRelay)) {
                         break;
                     }
                 }
