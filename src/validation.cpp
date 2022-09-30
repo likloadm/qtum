@@ -5715,10 +5715,7 @@ bool ChainstateManager::ProcessNewBlock(const CChainParams& chainparams, const s
 
     if (!postponeRelay)
     {
-        if (!GetMainSignals().RelayAlternativeChain(state, block, &sForkTips))
-        {
-            return error("%s: RelayAlternativeChain failed", __func__);
-        }
+        GetMainSignals().RelayAlternativeChain(state, block, &sForkTips)
     }
     else
     {

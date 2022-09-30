@@ -289,7 +289,7 @@ public:
     void BlockDisconnected(const std::shared_ptr<const CBlock> &block, const CBlockIndex* pindex) override;
     void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override;
     void BlockChecked(const CBlock& block, const BlockValidationState& state) override;
-    bool RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips) override;
+    void RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips) override;
     void NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock>& pblock) override;
 
     /** Implement NetEventsInterface */
@@ -1765,12 +1765,12 @@ void PeerManagerImpl::BlockChecked(const CBlock& block, const BlockValidationSta
         mapBlockSource.erase(it);
 }
 
-bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips)
+void PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips)
 {
     if (!pblock)
     {
         LogPrint(BCLog::NET, "%s():%d - Null pblock!\n", __func__, __LINE__);
-        return false;
+//        return false;
     }
 
     const CChainParams& chainParams = Params();
@@ -1781,7 +1781,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     if (m_chainman.ActiveChain().Tip()->GetBlockHash() == hashAlternativeTip)
     {
         LogPrint(BCLog::NET, "%s():%d - Exiting: already best tip\n", __func__, __LINE__);
-        return true;
+//        return true;
     }
 
     CBlockIndex* pindex = NULL;
@@ -1794,14 +1794,14 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     if (!pindex)
     {
         LogPrint(BCLog::NET, "%s():%d - Null pblock index!\n", __func__, __LINE__);
-        return false;
+//        return false;
     }
 
     // 2. check this block is a fork from best chain, otherwise exit
     if (m_chainman.ActiveChain().Contains(pindex))
     {
         LogPrint(BCLog::NET, "%s():%d - Exiting: it belongs to main chain\n", __func__, __LINE__);
-        return true;
+//        return true;
     }
 
     // 3. check we have complete list of ancestors
@@ -1815,7 +1815,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
     if ( pindex->nChainTx <= 0 )
     {
         LogPrint(BCLog::NET, "%s():%d - Exiting: nChainTx=0\n", __func__, __LINE__);
-        return true;
+//        return true;
     }
 
     // 4. Starting from this block, look for the best height that has a complete chain of ancestors
@@ -1869,7 +1869,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
             }
         });
     }
-    return true;
+//    return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////

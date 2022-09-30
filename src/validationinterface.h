@@ -174,7 +174,7 @@ protected:
      */
     virtual void BlockChecked(const CBlock&, const BlockValidationState&) {}
 
-    virtual bool RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips) {}
+    virtual void RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips) {}
     /**
      * Notifies listeners that a block which builds directly on our current tip
      * has been received and connected to the headers tree, though not validated yet */
@@ -210,7 +210,7 @@ public:
     void BlockDisconnected(const std::shared_ptr<const CBlock> &, const CBlockIndex* pindex);
     void ChainStateFlushed(const CBlockLocator &);
     void BlockChecked(const CBlock&, const BlockValidationState&);
-    bool RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips);
+    void RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips);
     void NewPoWValidBlock(const CBlockIndex *, const std::shared_ptr<const CBlock>&);
 };
 
