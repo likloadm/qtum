@@ -147,22 +147,6 @@ static const CAmount DEFAULT_STAKING_MIN_UTXO_VALUE = 100 * COIN;
 //! -forceinitialblocksdownloadmode default
 static const bool DEFAULT_FORCE_INITIAL_BLOCKS_DOWNLOAD_MODE = false;
 
-struct CompareBlocksByHeight
-{
-    bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
-    {
-        /* Make sure that unequal blocks with the same height do not compare
-           equal. Use the pointers themselves to make a distinction. */
-
-        if (a->nHeight != b->nHeight)
-          return (a->nHeight > b->nHeight);
-
-        return a < b;
-    }
-};
-
-typedef std::set<const CBlockIndex*, CompareBlocksByHeight> BlockSet;
-
 
 /** Current sync state passed to tip changed callbacks. */
 enum class SynchronizationState {
