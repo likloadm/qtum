@@ -5713,17 +5713,17 @@ bool ChainstateManager::ProcessNewBlock(const CChainParams& chainparams, const s
         return error("%s: ActivateBestChain failed (%s)", __func__, state.ToString());
     }
 
-//    if (!postponeRelay)
-//    {
-//        if (!RelayAlternativeChain(state, pblock, &sForkTips))
-//        {
-//            return error("%s: RelayAlternativeChain failed", __func__);
-//        }
-//    }
-//    else
-//    {
-//        LogPrint("net", "%s: Not relaying block %s\n", __func__, pblock->GetHash().ToString());
-//    }
+    if (!postponeRelay)
+    {
+        if (!GetMainSignals().RelayAlternativeChain(state, pblock, &sForkTips))
+        {
+            return error("%s: RelayAlternativeChain failed", __func__);
+        }
+    }
+    else
+    {
+        LogPrintf("%s: Not relaying block %s\n", __func__, pblock->GetHash().ToString());
+    }
 
     return true;
 }
