@@ -199,6 +199,7 @@ public:
 
     uint64_t nNonce64{0};
     uint256 mix_hash{0};
+    int nChainDelay;
 
     uint256 hashStateRoot{}; // ariel
     uint256 hashUTXORoot{}; // ariel

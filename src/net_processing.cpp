@@ -1764,7 +1764,7 @@ void PeerManagerImpl::BlockChecked(const CBlock& block, const BlockValidationSta
         mapBlockSource.erase(it);
 }
 
-bool PeerManagerImpl::RelayAlternativeChain(CValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips)
+bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips)
 {
     if (!pblock)
     {
