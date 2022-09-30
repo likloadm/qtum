@@ -4281,8 +4281,8 @@ bool CChainState::PreciousBlock(BlockValidationState& state, CBlockIndex* pindex
             PruneBlockIndexCandidates();
         }
     }
-
-    return ActivateBestChain(state, std::shared_ptr<const CBlock>());
+    bool postponeRelay = false;
+    return ActivateBestChain(state, std::shared_ptr<const CBlock>(), postponeRelay);
 }
 
 bool CChainState::InvalidateBlock(BlockValidationState& state, CBlockIndex* pindex)
