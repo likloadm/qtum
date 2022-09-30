@@ -250,6 +250,12 @@ void CMainSignals::BlockChecked(const CBlock& block, const BlockValidationState&
     m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.BlockChecked(block, state); });
 }
 
+void CMainSignals::RelayAlternativeChain(BlockValidationState &state, const std::shared_ptr<const CBlock> pblock, BlockSet* sForkTips) {
+//    LOG_EVENT("%s: block hash=%s state=%s", __func__,
+//              block.GetHash().ToString(), state.ToString());
+    m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.RelayAlternativeChain(state, pblock, &sForkTips); });
+}
+
 void CMainSignals::NewPoWValidBlock(const CBlockIndex *pindex, const std::shared_ptr<const CBlock> &block) {
     LOG_EVENT("%s: block hash=%s", __func__, block->GetHash().ToString());
     m_internals->Iterate([&](CValidationInterface& callbacks) { callbacks.NewPoWValidBlock(pindex, block); });
