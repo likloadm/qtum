@@ -24,20 +24,6 @@ class CScheduler;
 enum class MemPoolRemovalReason;
 
 
-struct CompareBlocksByHeight
-{
-    bool operator()(const CBlockIndex* a, const CBlockIndex* b) const
-    {
-        /* Make sure that unequal blocks with the same height do not compare
-           equal. Use the pointers themselves to make a distinction. */
-
-        if (a->nHeight != b->nHeight)
-          return (a->nHeight > b->nHeight);
-
-        return a < b;
-    }
-};
-
 typedef std::set<const CBlockIndex*, CompareBlocksByHeight> BlockSet;
 /** Register subscriber */
 void RegisterValidationInterface(CValidationInterface* callbacks);
