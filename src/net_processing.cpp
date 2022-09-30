@@ -1842,7 +1842,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
 
     int nodeHeight = -1;
     if (m_node->GetLocalServices() & NODE_NETWORK) {
-        m_connman->ForEachNode([&vInv, &nodeHeight, &nBlockEstimate](CNode* pnode) {
+        m_connman->ForEachNode([&vInv, &nodeHeight, &nBlockEstimate, &m_chainman](CNode* pnode) {
             NodeId nodeid = pnode->GetId();
             PeerRef peer = std::make_shared<Peer>(nodeid, /* addr_relay = */ !pnode->IsBlockOnlyConn());
             if (peer->m_starting_height != -1)
@@ -1861,7 +1861,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
                         {
                             LogPrint(BCLog::NET, "%s():%d - Pushing inv to Node (id=%d) hash[%s]\n",
                                 __func__, __LINE__, pnode->GetId(), inv.hash.ToString() );
-                            pnode->PushTxInventory(inv);
+                            pnode->PushTxInventory(inv.hash);
                         }
                     }
                 }
