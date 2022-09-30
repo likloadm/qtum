@@ -4156,7 +4156,7 @@ static void LimitValidationInterfaceQueue() LOCKS_EXCLUDED(cs_main) {
     }
 }
 
-bool CChainState::ActivateBestChain(BlockValidationState& state, std::shared_ptr<const CBlock> pblock)
+bool CChainState::ActivateBestChain(BlockValidationState& state, std::shared_ptr<const CBlock> pblock, bool &postponeRelay)
 {
     // Note that while we're often called here from ProcessNewBlock, this is
     // far from a guarantee. Things in the P2P/RPC will often end up calling
@@ -5708,8 +5708,21 @@ bool ChainstateManager::ProcessNewBlock(const CChainParams& chainparams, const s
     NotifyHeaderTip(ActiveChainstate());
 
     BlockValidationState state; // Only used to report errors, not invalidity - ignore it
-    if (!ActiveChainstate().ActivateBestChain(state, block)) {
+    bool postponeRelay = false;
+    if (!ActiveChainstate().ActivateBestChain(state, block, postponeRelay)) {
         return error("%s: ActivateBestChain failed (%s)", __func__, state.ToString());
+    }
+
+    if (!postponeRelay)
+    {
+        if (!RelayAlternativeChain(state, pblock, &sForkTips))
+        {
+            return error("%s: RelayAlternativeChain failed", __func__);
+        }
+    }
+    else
+    {
+        LogPrint("net", "%s: Not relaying block %s\n", __func__, pblock->GetHash().ToString());
     }
 
     return true;
@@ -6488,7 +6501,7 @@ void CChainState::LoadExternalBlockFile(FILE* fileIn, FlatFilePos* dbp)
                 // validating PoS proofs
                 {
                     BlockValidationState state;
-                    if (!ActivateBestChain(state, nullptr)) {
+                    if (!ActivateBestChain(state, nullptr, nullptr)) {
                         break;
                     }
                 }
