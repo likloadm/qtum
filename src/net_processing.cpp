@@ -1850,7 +1850,7 @@ bool PeerManagerImpl::RelayAlternativeChain(BlockValidationState &state, const s
             {
                 nodeHeight = nBlockEstimate;
             }
-            if (chainActive.Height() > nodeHeight)
+            if (m_chainman.ActiveChain().Height() > nodeHeight)
             {
                 {
                     {
