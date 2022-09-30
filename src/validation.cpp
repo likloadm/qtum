@@ -4530,7 +4530,7 @@ void CChainState::ReceivedBlockTransactions(const CBlock& block, CBlockIndex* pi
             if (m_chain.Tip() == nullptr || !setBlockIndexCandidates.value_comp()(pindex, m_chain.Tip())) {
                 setBlockIndexCandidates.insert(pindex);
             }
-            if (m_chain.Tip() == nullptr || !CBlockIndexRealWorkComparator()(pindex, chainActive.Tip()))
+            if (m_chain.Tip() == nullptr || !CBlockIndexRealWorkComparator()(pindex, m_chain.Tip()))
             {
                 if (sForkTips)
                 {
