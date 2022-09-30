@@ -219,7 +219,8 @@ TestingSetup::TestingSetup(const std::string& chainName, const std::vector<const
     }
 
     BlockValidationState state;
-    if (!m_node.chainman->ActiveChainstate().ActivateBestChain(state)) {
+    bool postponeRelay = false;
+    if (!m_node.chainman->ActiveChainstate().ActivateBestChain(state, nullptr, postponeRelay)) {
         throw std::runtime_error(strprintf("ActivateBestChain failed. (%s)", state.ToString()));
     }
 

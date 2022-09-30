@@ -2519,9 +2519,9 @@ static RPCHelpMan invalidateblock()
         }
     }
     chainman.ActiveChainstate().InvalidateBlock(state, pblockindex);
-
+    bool postponeRelay = false;
     if (state.IsValid()) {
-        chainman.ActiveChainstate().ActivateBestChain(state);
+        chainman.ActiveChainstate().ActivateBestChain(state, nullptr, postponeRelay);
     }
 
     if (!state.IsValid()) {
@@ -2562,7 +2562,8 @@ static RPCHelpMan reconsiderblock()
     }
 
     BlockValidationState state;
-    chainman.ActiveChainstate().ActivateBestChain(state);
+    bool postponeRelay = false;
+    chainman.ActiveChainstate().ActivateBestChain(state, nullptr, postponeRelay);
 
     if (!state.IsValid()) {
         throw JSONRPCError(RPC_DATABASE_ERROR, state.ToString());
