@@ -4523,7 +4523,7 @@ CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block, CChainStat
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     if (pindexNew->pprev){
-        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), chainstate.m_chain.Height();, fIsStartupSyncing);
+        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), chainstate.m_chain.Height(), fIsStartupSyncing);
     } else {
         pindexNew->nChainDelay = 0 ;
     }
