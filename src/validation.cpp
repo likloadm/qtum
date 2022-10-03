@@ -168,6 +168,7 @@ bool fAddressIndex = false; // ariel
 bool fLogEvents = false;
 bool fRequireStandard = true;
 bool fIsStartupSyncing = true;
+BlockTimeMap mGlobalForkTips;
 bool fCheckBlockIndex = false;
 bool fCheckpointsEnabled = DEFAULT_CHECKPOINTS_ENABLED;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
