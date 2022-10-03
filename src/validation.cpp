@@ -288,7 +288,7 @@ bool addToGlobalForkTips(const CBlockIndex* pindex)
     return mGlobalForkTips.insert(std::make_pair( pindex, (int)GetTime() )).second;
 }
 
-bool updateGlobalForkTips(const CBlockIndex* pindex, bool lookForwardTips)
+bool updateGlobalForkTips(const CBlockIndex* pindex, bool lookForwardTips, CChainState& chainstate)
 {
     if (!pindex)
         return false;
@@ -296,7 +296,7 @@ bool updateGlobalForkTips(const CBlockIndex* pindex, bool lookForwardTips)
     LogPrintf("%s():%d - Entering: lookFwd[%d], h(%d) [%s]\n",
         __func__, __LINE__, lookForwardTips, pindex->nHeight, pindex->GetBlockHash().ToString());
 
-    if (chainActive.Contains(pindex))
+    if (chainstate.m_chain.Contains(pindex))
     {
         LogPrintf("%s():%d - Exiting: header is on main chain h(%d) [%s]\n",
             __func__, __LINE__, pindex->nHeight, pindex->GetBlockHash().ToString());
@@ -328,7 +328,7 @@ bool updateGlobalForkTips(const CBlockIndex* pindex, bool lookForwardTips)
                 LogPrintf("%s():%d - tip %s h(%d)\n",
                     __func__, __LINE__, tipIndex->GetBlockHash().ToString(), tipIndex->nHeight);
 
-                if (tipIndex == chainActive.Tip() || tipIndex == pindexBestHeader )
+                if (tipIndex == chainstate.m_chain.Tip() || tipIndex == pindexBestHeader )
                 {
                     LogPrintf("%s():%d - skipping main chain tip\n", __func__, __LINE__);
                     continue;
@@ -5490,7 +5490,7 @@ bool BlockManager::AcceptBlockHeader(const CBlockHeader& block, BlockValidationS
             // Block header is already known.
             CBlockIndex* pindex = miSelf->second;
 
-            updateGlobalForkTips(pindex, lookForwardTips);
+            updateGlobalForkTips(pindex, lookForwardTips, chainstate);
 
             if (ppindex)
                 *ppindex = pindex;
