@@ -370,9 +370,9 @@ int getMostRecentGlobalForkTips(std::vector<uint256>& output)
 {
     using map_pair = pair<const CBlockIndex*, int>;
 
-    std::vector<map_pair> vTemp(mGlobalForkTips.begin(), mGlobalForkTips.end());
+    std::vector<map_pair> vTemp(std::begin(mGlobalForkTips), std::end(mGlobalForkTips));
 
-    sort(vTemp.begin(), vTemp.end(), [](const map_pair& a, const map_pair& b) { return a.second < b.second; });
+    sort(std::begin(vTemp), std::end(vTemp), [](const map_pair& a, const map_pair& b) { return a.second < b.second; });
 
     int count = MAX_NUM_GLOBAL_FORKS;
 
