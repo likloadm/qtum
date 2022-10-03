@@ -167,6 +167,7 @@ bool g_parallel_script_checks{false};
 bool fAddressIndex = false; // ariel
 bool fLogEvents = false;
 bool fRequireStandard = true;
+bool fIsStartupSyncing = true;
 bool fCheckBlockIndex = false;
 bool fCheckpointsEnabled = DEFAULT_CHECKPOINTS_ENABLED;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
@@ -262,6 +263,27 @@ bool CheckFinalTx(const CBlockIndex* active_chain_tip, const CTransaction &tx, i
                              : GetAdjustedTime();
 
     return IsFinalTx(tx, nBlockHeight, nBlockTime);
+}
+
+bool addToGlobalForkTips(const CBlockIndex* pindex)
+{
+    if (!pindex)
+        return false;
+
+    unsigned int erased = 0;
+    if (pindex->pprev)
+    {
+        // remove its parent if any
+        erased = mGlobalForkTips.erase(pindex->pprev);
+    }
+
+    if (erased == 0)
+    {
+        LogPrintf("%s():%d - adding first fork tip in global map: h(%d) [%s]\n",
+            __func__, __LINE__, pindex->nHeight, pindex->GetBlockHash().ToString());
+    }
+
+    return mGlobalForkTips.insert(std::make_pair( pindex, (int)GetTime() )).second;
 }
 
 bool TestLockPointValidity(CChain& active_chain, const LockPoints* lp)
@@ -3763,13 +3785,17 @@ void CChainState::UpdateTip(const CBlockIndex* pindexNew)
             }
         }
     }
-
+    double syncProgress = Checkpoints::GuessVerificationProgress(m_params.TxData(), pindexNew);
+    if(fIsStartupSyncing && std::abs(1.0 - syncProgress) < 0.000001) {
+        LogPrintf("Fully synchronized at block height %d\n", chainActive.Height());
+        fIsStartupSyncing = false;
+    }
 
     LogPrintf("%s: new best=%s height=%d version=0x%08x log2_work=%f tx=%lu date='%s' progress=%f cache=%.1fMiB(%utxo)%s\n", __func__,
       pindexNew->GetBlockHash().ToString(), pindexNew->nHeight, pindexNew->nVersion,
       log(pindexNew->nChainWork.getdouble())/log(2.0), (unsigned long)pindexNew->nChainTx,
       FormatISO8601DateTime(pindexNew->GetBlockTime()),
-      GuessVerificationProgress(m_params.TxData(), pindexNew), this->CoinsTip().DynamicMemoryUsage() * (1.0 / (1<<20)), this->CoinsTip().GetCacheSize(),
+      syncProgress, this->CoinsTip().DynamicMemoryUsage() * (1.0 / (1<<20)), this->CoinsTip().GetCacheSize(),
       !warning_messages.empty() ? strprintf(" warning='%s'", warning_messages.original) : "");
 }
 
@@ -4494,12 +4520,22 @@ CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block)
     }
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
+    if (pindexNew->pprev){
+        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), m_chain.Height(), fIsStartupSyncing);
+    } else {
+        pindexNew->nChainDelay = 0 ;
+    }
+    if(pindexNew->nChainDelay != 0) {
+        LogPrintf("%s: Block belong to a chain under punishment Delay VAL: %i BLOCKHEIGHT: %d\n",__func__, pindexNew->nChainDelay, pindexNew->nHeight);
+    }
     pindexNew->nStakeModifier = ComputeStakeModifier(pindexNew->pprev, block.IsProofOfWork() ? hash : block.prevoutStake.hash);
     pindexNew->RaiseValidity(BLOCK_VALID_TREE);
-    if (pindexBestHeader == nullptr || pindexBestHeader->nChainWork < pindexNew->nChainWork)
+    if (pindexBestHeader == nullptr || (pindexBestHeader->nChainWork < pindexNew->nChainWork && pindexNew->nChainDelay==0))
         pindexBestHeader = pindexNew;
 
     setDirtyBlockIndex.insert(pindexNew);
+
+    addToGlobalForkTips(pindexNew);
 
     return pindexNew;
 }
@@ -5973,6 +6009,7 @@ bool BlockManager::LoadBlockIndex(
             pindex->BuildSkip();
         if (pindex->IsValid(BLOCK_VALID_TREE) && (pindexBestHeader == nullptr || CBlockIndexWorkComparator()(pindexBestHeader, pindex)))
             pindexBestHeader = pindex;
+        addToGlobalForkTips(pindex);
     }
 
     return true;
