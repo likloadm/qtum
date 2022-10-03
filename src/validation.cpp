@@ -3788,7 +3788,7 @@ void CChainState::UpdateTip(const CBlockIndex* pindexNew)
     }
     double syncProgress = GuessVerificationProgress(m_params.TxData(), pindexNew);
     if(fIsStartupSyncing && std::abs(1.0 - syncProgress) < 0.000001) {
-        LogPrintf("Fully synchronized at block height %d\n", pindexNew.Height());
+        LogPrintf("Fully synchronized at block height %d\n", pindexNew->nHeight);
         fIsStartupSyncing = false;
     }
 
@@ -4492,7 +4492,7 @@ void CChainState::ResetBlockFailureFlags(CBlockIndex *pindex) {
     }
 }
 
-CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block)
+CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block, CChainState& chainstate)
 {
     AssertLockHeld(cs_main);
 
@@ -4522,7 +4522,7 @@ CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block)
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     if (pindexNew->pprev){
-        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), m_chain.Height(), fIsStartupSyncing);
+        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), chainstate.m_chain.Height();, fIsStartupSyncing);
     } else {
         pindexNew->nChainDelay = 0 ;
     }
@@ -5495,7 +5495,7 @@ bool BlockManager::AcceptBlockHeader(const CBlockHeader& block, BlockValidationS
             return false;
         }
     }
-    CBlockIndex* pindex = AddToBlockIndex(block);
+    CBlockIndex* pindex = AddToBlockIndex(block, chainstate);
 
     if (ppindex)
         *ppindex = pindex;
@@ -6453,7 +6453,7 @@ bool CChainState::LoadGenesisBlock()
         FlatFilePos blockPos = SaveBlockToDisk(block, 0, m_chain, m_params, nullptr);
         if (blockPos.IsNull())
             return error("%s: writing genesis block to disk failed", __func__);
-        CBlockIndex *pindex = m_blockman.AddToBlockIndex(block);
+        CBlockIndex *pindex = m_blockman.AddToBlockIndex(block, chainstate);
         pindex->hashProof = m_params.GetConsensus().hashGenesisBlock;
         ReceivedBlockTransactions(block, pindex, blockPos, nullptr);
     } catch (const std::runtime_error& e) {
