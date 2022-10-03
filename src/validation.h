@@ -28,6 +28,7 @@
 #include <util/check.h>
 #include <util/hasher.h>
 #include <util/translation.h>
+#include <ariel/delay.h>
 
 #include <atomic>
 #include <map>
