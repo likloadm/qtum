@@ -372,7 +372,7 @@ int getMostRecentGlobalForkTips(std::vector<uint256>& output)
 
     std::vector<map_pair> vTemp(begin(mGlobalForkTips), end(mGlobalForkTips));
 
-    sort(begin(vTemp), end(vTemp), [](const map_pair& a, const map_pair& b) { return a.second < b.second; });
+    sort(vTemp.begin(), vTemp.end(), [](const map_pair& a, const map_pair& b) { return a.second < b.second; });
 
     int count = MAX_NUM_GLOBAL_FORKS;
 
@@ -5489,6 +5489,9 @@ bool BlockManager::AcceptBlockHeader(const CBlockHeader& block, BlockValidationS
         if (miSelf != m_block_index.end()) {
             // Block header is already known.
             CBlockIndex* pindex = miSelf->second;
+
+            updateGlobalForkTips(pindex, lookForwardTips);
+
             if (ppindex)
                 *ppindex = pindex;
             if (pindex->nStatus & BLOCK_FAILED_MASK) {
