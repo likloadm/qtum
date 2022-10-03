@@ -4493,7 +4493,7 @@ void CChainState::ResetBlockFailureFlags(CBlockIndex *pindex) {
     }
 }
 
-CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block, CChainState& chainstate)
+CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block, CChain& m_chain)
 {
     AssertLockHeld(cs_main);
 
@@ -4523,7 +4523,7 @@ CBlockIndex* BlockManager::AddToBlockIndex(const CBlockHeader& block, CChainStat
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     if (pindexNew->pprev){
-        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), chainstate.m_chain.Height(), fIsStartupSyncing);
+        pindexNew->nChainDelay = pindexNew->pprev->nChainDelay + GetBlockDelay(*pindexNew,*(pindexNew->pprev), m_chain.Height(), fIsStartupSyncing);
     } else {
         pindexNew->nChainDelay = 0 ;
     }
@@ -5496,7 +5496,7 @@ bool BlockManager::AcceptBlockHeader(const CBlockHeader& block, BlockValidationS
             return false;
         }
     }
-    CBlockIndex* pindex = AddToBlockIndex(block, chainstate);
+    CBlockIndex* pindex = AddToBlockIndex(block, chainstate.m_chain);
 
     if (ppindex)
         *ppindex = pindex;
@@ -6454,7 +6454,7 @@ bool CChainState::LoadGenesisBlock()
         FlatFilePos blockPos = SaveBlockToDisk(block, 0, m_chain, m_params, nullptr);
         if (blockPos.IsNull())
             return error("%s: writing genesis block to disk failed", __func__);
-        CBlockIndex *pindex = m_blockman.AddToBlockIndex(block, chainstate);
+        CBlockIndex *pindex = m_blockman.AddToBlockIndex(block, chainstate.m_chain);
         pindex->hashProof = m_params.GetConsensus().hashGenesisBlock;
         ReceivedBlockTransactions(block, pindex, blockPos, nullptr);
     } catch (const std::runtime_error& e) {
