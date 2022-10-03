@@ -3786,9 +3786,9 @@ void CChainState::UpdateTip(const CBlockIndex* pindexNew)
             }
         }
     }
-    double syncProgress = Checkpoints::GuessVerificationProgress(m_params.TxData(), pindexNew);
+    double syncProgress = GuessVerificationProgress(m_params.TxData(), pindexNew);
     if(fIsStartupSyncing && std::abs(1.0 - syncProgress) < 0.000001) {
-        LogPrintf("Fully synchronized at block height %d\n", chainActive.Height());
+        LogPrintf("Fully synchronized at block height %d\n", pindexNew.Height());
         fIsStartupSyncing = false;
     }
 
