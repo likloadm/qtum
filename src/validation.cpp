@@ -168,6 +168,7 @@ bool fAddressIndex = false; // ariel
 bool fLogEvents = false;
 bool fRequireStandard = true;
 bool fIsStartupSyncing = true;
+typedef std::map<const CBlockIndex*, int, CompareBlocksByHeight> BlockTimeMap;
 BlockTimeMap mGlobalForkTips;
 bool fCheckBlockIndex = false;
 bool fCheckpointsEnabled = DEFAULT_CHECKPOINTS_ENABLED;
