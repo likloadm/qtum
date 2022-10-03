@@ -87,6 +87,8 @@ struct PrecomputedTransactionData;
 struct LockPoints;
 struct AssumeutxoData;
 
+static const int MAX_NUM_GLOBAL_FORKS = 3;
+
 /** Minimum gas limit that is allowed in a transaction within a block - prevent various types of tx and mempool spam **/
 static const uint64_t MINIMUM_GAS_LIMIT = 10000;
 

@@ -288,6 +288,104 @@ bool addToGlobalForkTips(const CBlockIndex* pindex)
     return mGlobalForkTips.insert(std::make_pair( pindex, (int)GetTime() )).second;
 }
 
+bool updateGlobalForkTips(const CBlockIndex* pindex, bool lookForwardTips)
+{
+    if (!pindex)
+        return false;
+
+    LogPrintf("%s():%d - Entering: lookFwd[%d], h(%d) [%s]\n",
+        __func__, __LINE__, lookForwardTips, pindex->nHeight, pindex->GetBlockHash().ToString());
+
+    if (chainActive.Contains(pindex))
+    {
+        LogPrintf("%s():%d - Exiting: header is on main chain h(%d) [%s]\n",
+            __func__, __LINE__, pindex->nHeight, pindex->GetBlockHash().ToString());
+        return false;
+    }
+
+    if (mGlobalForkTips.count(pindex) )
+    {
+        LogPrintf("%s():%d - updating tip in global set: h(%d) [%s]\n",
+            __func__, __LINE__, pindex->nHeight, pindex->GetBlockHash().ToString());
+        mGlobalForkTips[pindex] = (int)GetTime();
+        return true;
+    }
+    else
+    {
+        // check from tips downward if we connect to this index and in this case
+        // update the tip instead (for coping with very old tips not in the most recent set)
+        if (lookForwardTips)
+        {
+            int h = pindex->nHeight;
+            bool done = false;
+
+            for (auto mapPair : mGlobalForkTips)
+            {
+                const CBlockIndex* tipIndex = mapPair.first;
+                if (!tipIndex)
+                    continue;
+
+                LogPrintf("%s():%d - tip %s h(%d)\n",
+                    __func__, __LINE__, tipIndex->GetBlockHash().ToString(), tipIndex->nHeight);
+
+                if (tipIndex == chainActive.Tip() || tipIndex == pindexBestHeader )
+                {
+                    LogPrintf("%s():%d - skipping main chain tip\n", __func__, __LINE__);
+                    continue;
+                }
+
+                const CBlockIndex* dum = tipIndex;
+                while ( dum != pindex && dum->nHeight >= h)
+                {
+                    dum = dum->pprev;
+                }
+
+                if (dum == pindex)
+                {
+                    LogPrintf("%s():%d - updating tip access time in global set: h(%d) [%s]\n",
+                        __func__, __LINE__, tipIndex->nHeight, tipIndex->GetBlockHash().ToString());
+                    mGlobalForkTips[tipIndex] = (int)GetTime();
+                    done |= true;
+                }
+                else
+                {
+                    // we must neglect this branch since not linked to the pindex
+                    LogPrintf("%s():%d - stopped at %s h(%d)\n",
+                        __func__, __LINE__, dum->GetBlockHash().ToString(), dum->nHeight);
+                }
+            }
+
+            LogPrintf("%s():%d - exiting done[%d]\n", __func__, __LINE__, done);
+            return done;
+        }
+
+        // nothing to do, this is not a tip at all
+        LogPrintf("%s():%d - not a tip: h(%d) [%s]\n",
+            __func__, __LINE__, pindex->nHeight, pindex->GetBlockHash().ToString());
+        return false;
+    }
+}
+
+int getMostRecentGlobalForkTips(std::vector<uint256>& output)
+{
+    using map_pair = pair<const CBlockIndex*, int>;
+
+    std::vector<map_pair> vTemp(begin(mGlobalForkTips), end(mGlobalForkTips));
+
+    sort(begin(vTemp), end(vTemp), [](const map_pair& a, const map_pair& b) { return a.second < b.second; });
+
+    int count = MAX_NUM_GLOBAL_FORKS;
+
+    for (auto const &p : boost::adaptors::reverse(vTemp))
+    {
+        output.push_back(p.first->GetBlockHash() );
+        if (--count <= 0)
+            break;
+    }
+
+    return output.size();
+}
+
 bool TestLockPointValidity(CChain& active_chain, const LockPoints* lp)
 {
     AssertLockHeld(cs_main);
