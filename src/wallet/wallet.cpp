@@ -328,6 +328,7 @@ std::shared_ptr<CWallet> CreateWallet(interfaces::Chain& chain, const std::strin
                     for (auto spk_man : wallet->GetActiveScriptPubKeyMans()) {
                         if (!spk_man->SetupGeneration()) {
                             error = Untranslated("Unable to generate initial keys");
+                            LogPrintf("perviy proeb\n");
                             status = DatabaseStatus::FAILED_CREATE;
                             return nullptr;
                         }
