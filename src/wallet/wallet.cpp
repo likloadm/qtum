@@ -319,19 +319,18 @@ std::shared_ptr<CWallet> CreateWallet(interfaces::Chain& chain, const std::strin
                 return nullptr;
             }
 
-            wallet->UnsetWalletFlag(WALLET_FLAG_BLANK_WALLET);
-
             // Set a seed for the wallet
             {
                 LOCK(wallet->cs_wallet);
                 if (wallet->IsWalletFlagSet(WALLET_FLAG_DESCRIPTORS)) {
                     wallet->SetupDescriptorScriptPubKeyMans();
                 } else {
-                    if (!wallet->TopUpKeyPool()) {
-                        LogPrintf("perviy proeb\n");
-                        error = Untranslated("Unable to generate initial keys");
-                        status = DatabaseStatus::FAILED_CREATE;
-                        return nullptr;
+                    for (auto spk_man : wallet->GetActiveScriptPubKeyMans()) {
+                        if (!spk_man->SetupGeneration()) {
+                            error = Untranslated("Unable to generate initial keys");
+                            status = DatabaseStatus::FAILED_CREATE;
+                            return nullptr;
+                        }
                     }
                 }
             }
