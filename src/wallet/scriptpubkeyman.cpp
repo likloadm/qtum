@@ -1953,10 +1953,10 @@ bool DescriptorScriptPubKeyMan::SetupDescriptorGeneration(const CExtKey& master_
         throw std::runtime_error(std::string(__func__) + ": writing descriptor failed");
     }
 
+    m_storage.UnsetBlankWalletFlag(batch);
     // TopUp
     TopUp();
 
-    m_storage.UnsetBlankWalletFlag(batch);
     return true;
 }
 
