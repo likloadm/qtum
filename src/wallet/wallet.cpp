@@ -254,7 +254,6 @@ std::shared_ptr<CWallet> LoadWallet(interfaces::Chain& chain, const std::string&
 std::shared_ptr<CWallet> CreateWallet(interfaces::Chain& chain, const std::string& name, std::optional<bool> load_on_start, DatabaseOptions& options, DatabaseStatus& status, bilingual_str& error, std::vector<bilingual_str>& warnings)
 {
     uint64_t wallet_creation_flags = options.create_flags;
-    WalletBatch batch(GetDatabase());
     const SecureString& passphrase = options.create_passphrase;
 
     if (wallet_creation_flags & WALLET_FLAG_DESCRIPTORS) options.require_format = DatabaseFormat::SQLITE;
@@ -320,7 +319,7 @@ std::shared_ptr<CWallet> CreateWallet(interfaces::Chain& chain, const std::strin
                 return nullptr;
             }
 
-            wallet->UnsetBlankWalletFlag(batch)
+            wallet->UnsetWalletFlag(WALLET_FLAG_BLANK_WALLET);
 
             // Set a seed for the wallet
             {
