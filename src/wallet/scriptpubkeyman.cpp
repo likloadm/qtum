@@ -1359,7 +1359,7 @@ bool LegacyScriptPubKeyMan::GetKeyFromPool(CPubKey& result, const OutputType typ
     {
         LOCK(cs_KeyStore);
         int64_t nIndex;
-        if (!ReserveKeyFromKeyPool(nIndex, keypool, internal) && !m_storage.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS)) {
+        if (!ReserveKeyFromKeyPool(nIndex, keypool, internal) && !m_storage.IsWalletFlagSet(WALLET_FLAG_DISABLE_PRIVATE_KEYS) && !m_storage.IsWalletFlagSet(WALLET_FLAG_BLANK_WALLET)) {
             if (m_storage.IsLocked()) return false;
             WalletBatch batch(m_storage.GetDatabase());
             result = GenerateNewKey(batch, m_hd_chain, internal);
