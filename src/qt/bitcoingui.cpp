@@ -207,7 +207,7 @@ BitcoinGUI::BitcoinGUI(interfaces::Node& node, const PlatformStyle *_platformSty
 
     updateLedgerIcon();
 
-    if (gArgs.GetBoolArg("-staking", true))
+    if (gArgs.GetBoolArg("-staking", false))
     {
         timerStakingIcon = new QTimer(labelStakingIcon);
         connect(timerStakingIcon, SIGNAL(timeout()), this, SLOT(updateStakingIcon()));
@@ -1709,6 +1709,7 @@ void BitcoinGUI::updateLedgerIcon()
 
 void BitcoinGUI::updateStakingIcon()
 {
+    return;
     if(m_node.shutdownRequested() || !clientModel || clientModel->fBatchProcessingMode)
         return;
 
