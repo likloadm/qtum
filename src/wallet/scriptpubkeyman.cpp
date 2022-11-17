@@ -1160,7 +1160,7 @@ bool LegacyScriptPubKeyMan::CanGenerateKeys() const
 {
     // A wallet can generate keys if it has an HD seed (IsHDEnabled) or it is a non-HD wallet (pre FEATURE_HD)
     LOCK(cs_KeyStore);
-    return true; //IsHDEnabled() || !m_storage.CanSupportFeature(FEATURE_HD);
+    return !m_storage.IsWalletFlagSet(WALLET_FLAG_BLANK_WALLET); //IsHDEnabled() || !m_storage.CanSupportFeature(FEATURE_HD);
 }
 
 CPubKey LegacyScriptPubKeyMan::GenerateNewSeed()
